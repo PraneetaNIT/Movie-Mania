@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html>
+{% load static %}	
+	<head>
+		<title>
+			QUERY RESULT
+		</title>
+		<link href="{% static 'bootstrap.css' %}" rel="stylesheet">
+		<link href="{% static 'form.css' %}"  rel="stylesheet">
+		<link href="{% static 'drag.css' %}"  rel="stylesheet">
+		<script src="{%static 'jquery.js' %}"></script>
+		<script>
+			$(document).ready(function(){
+				var i = 0;
+				var j = 0;
+				$(document).on('click', '.button-link', function() {
+					var type = $(this).val();
+					if (type == "Following"){
+						var s = $(this).attr('id');
+						$(this).val('Follow');
+						$(this).css('background-color','#4479BA');
+						$.get('/movies/unfollow/',{ unfollow : s },function(data){
+						})
+					}
+					else {
+						var s = $(this).attr('id');
+						$(this).val('Following');
+						$(this).css('background-color','#C6C6FF');
+						$.get('/movies/follow/',{ follow : s },function(data){
+						})
+					}
+				})
+				$("#sub").click(function(){
+					var value = $("#select").val();
+					$("#res").show();
+					if (value == ""){
+						$("#res").html("<b style='color : red; margin-left : 10px'>SELECT VALUE BETWEEN 1 TO 10 FOR RATING</b>");
+						return false;
+					}
+					$.get('/movies/rate/{{ ver.0.10 }}/',{ rate : value },function(data){
+						$("#first").hide();
+						$("#sub").hide();
+						$("#select").hide();
+						var s = "<b>YOUR RATING : </b> " + value;
+						var t = data.split("\n");
+						$("#rates").html("IMDBRating : "+t[1]);
+						$("#votes").html("IMDBVotes : "+t[0]);
+						$('#res').html(s);
+					})
+				})
+				$("#dir").click(function(){
+					$("#dir").attr("href","/movies/director/{{ dir }}");
+				})
+				$("#submit_comment").click(function(){
+					var check = $("#comment").val();
+					if (check == ""){
+						$("#comment_error").show()
+					}
+					else{
+						$.get('/movies/comment/post/{{ ver.0.10 }}/',{ check : check },function(data){
+							$("#comment").val('');
+							$.each($.parseJSON(data), function(idx,obj){
+								var s = "<div id='"+obj.id+"'class='list-group-item'><a href='/movies/profile/{{ user.username }}'><img src='/home/vijender/workspace/DBMS/media/{{ profile.picture }}' width='60px' height='60px'/><b style='position : absolute; margin-left : 10px;'>"+obj.first+" "+obj.last+"</b></a><b style='position : absolute; margin-left : 700px;'>"+obj.time+"</b><br><a class='"+obj.id+"' id='total_likes' href='javascript:void(0)'>0 likes</a><div style='margin-left : 70px; margin-top : -30px; width : 700px;'><pre id='comment_display'>"+obj.comment+"</pre></div><div style='margin-left : 60px'><input id='edit' style='background-color : #ecf0f1' type='submit' value='edit'><input id='delete' style='background-color : #ecf0f1' type='submit' value='delete'><input id='like' style='background-color : #ecf0f1' type='submit' value='like'><input id='comment' style='background-color : #ecf0f1' type='submit' value='comment'></div><div hidden id='editing'><textarea maxlength='300' style='height : 30px; margin-left : 70px; width : 700px'></textarea><br><li hidden id='comment_error' style='margin-left : 70px'><b style='color : red'>Please add some comment before posting</b></li><input type='submit' id='edit_comment' style='background-color : #3498db; margin-left : 70px; border-color : #3498db' value='Post Comment'></div></div>"
+								$(".list-group").append($(s));
+							})
+						})	
+					}
+				})
+				$(document).on('click','input[type="submit"]',function(){
+					var s = $(this).attr("id");
+					if (s == "edit" || s == "edit_secondary"){
+						$(this).parents().next("#editing").show();
+						if (s == "edit")	j = 1;
+						else j = 3;
+					}
+					else if (s == "comment"){
+						$(this).parents().next("#editing").show();
+						j = 2;
+					}
+					else if (s == "delete" || s == "delete_secondary"){
+						var div = $(this).closest('.list-group-item');
+						var id = div.attr("id");
+						if (s == "delete"){
+							$.get('/movies/comment/delete/',{ id : id, status : "primary" },function(data){
+								div.hide();
+							})
+						}
+						else{
+							$.get('/movies/comment/delete/',{ id : id, status : "secondary" },function(data){
+								div.hide();
+							})
+						}
+					}
+					else if (s == "like" || s == "like_secondary"){
+						var div = $(this).closest('.list-group-item');
+						var comment_id = div.attr("id");
+						var movie_id = {{ ver.0.10 }}
+						var status,id;
+						if (s == "like") {
+							status = 'primary';
+							id = 0;
+						}
+						else {
+							status = 'secondary';
+							id = $(this).closest('#comment_status').attr("class");	
+						}
+						if ($(this).val() == "like"){
+							$.get('/movies/comment/like/',{ movie_id : movie_id , comment_id : comment_id, status : status, id : id  },function(data){
+								if (s == "like"){
+									div.find("#total_likes").html(data + " likes");
+									div.find('#like').val("unlike");
+								}
+								else{
+									div.find("#total_like").html(data + " likes");
+									div.find('#like_secondary').val("unlike");
+								}
+							})
+						}
+						else{
+							$.get('/movies/comment/unlike/',{ movie_id : movie_id , comment_id : comment_id, status : status },function(data){
+								if (s == "like"){
+									div.find("#total_likes").html(data + " likes");
+									div.find('#like').val("like");
+								}
+								else{
+									div.find("#total_like").html(data + " likes");
+									div.find('#like_secondary').val("like");
+								}
+							})
+						}
+					}
+					else if (s=="edit_comment"){
+						var textarea= $(this).parent().find('textarea').filter(':visible:first')
+						var comment = textarea.val();
+						if (comment == ""){
+							$(this).parents().closest('.list-group-item').find("#comment_error").show()
+						}
+						else{
+							var comment_id = $(this).closest('.list-group-item').attr("id");
+							textarea.val('');
+							if (j == 1){
+								$(this).parents().closest('.list-group-item').find("#comment_display").html(comment);
+								$(this).parent().hide();
+								$.get('/movies/comment/edit/',{ check : comment, id : comment_id, status : 'primary' },function(data){
+								})
+							}
+							else if (j == 3){
+								$(this).closest('.list-group-item').find("#comment_display").html(comment);
+								$(this).parent().hide();
+								$.get('/movies/comment/edit/',{ check : comment, id : comment_id, status : 'secondary' },function(data){
+								})
+							}
+							else{
+								var div = $(this).parent().closest('.list-group-item').find("#comment_status");
+								var comment_id = div.attr("class")
+								$(this).parent().hide();
+								$.get('/movies/comment/comment/',{ check : comment, movieid : {{ ver.0.10 }}, comment_id : comment_id },function(data){
+									$.each($.parseJSON(data), function(idx,obj){
+										var html = "<div id='"+obj.id+"' style='width : 700px; background-color : #ecf0f1' class='list-group-item'><a href='/movies/profile/{{ user.username }}'><img src='/home/vijender/workspace/DBMS/media/{{ profile.picture }}' width='60px' height='60px'/><b style='position : absolute; margin-left : 20px;'>"+obj.first+" "+obj.last+"</b></a><b style='position : absolute; margin-left : 400px'>"+obj.time+"</b><br><a id='total_like' class='"+obj.id+"' style='margin-top : 20px;' href='javascript:void(0)'>0 likes</a><div style='margin-left : 70px; margin-top : -50px; width : 600px;'><pre id='comment_display'>"+comment+"</pre></div><div style='margin-left : 80px'><input id='edit_secondary' style='background-color : #ecf0f1' type='submit' value='edit'><input id='delete_secondary' style='background-color : #ecf0f1' type='submit' value='delete'><input id='like_secondary' style='background-color : #ecf0f1' type='submit' value='like'></div><div hidden id='editing'><textarea maxlength='300' style='height : 30px; margin-left : 40px; width : 550px'></textarea><br><li hidden id='comment_error' style='margin-left : 40px'><b style='color : red'>Please add some comment before posting</b></li><input type='submit' id='edit_comment' style='background-color : #3498db; margin-left : 40px; border-color : #3498db' value='Post Comment'></div></div>"
+										div.append(html);
+										div.show();
+									})
+								})
+							}
+						}
+					}
+				})
+				$(document).on('click','a[href="javascript:void(0)"]',function(){
+					i = i + 1;
+					if (i == 2){
+						i = 0
+						return true
+					}
+					else{
+						$("#light").html("");
+						$("#lighten").html("");
+						i = 1;
+						var s = $(this).attr("id");
+						if (s=="edit_history" || s=="edit_hist"){
+							var t = $(this).attr("class");
+							var html="";
+							var status;
+							if (s=="edit_history") status = 'primary'
+							else status = 'secondary'
+							$.get('/movies/comment/edit_history/',{ commentid : t, status : status },function(data){
+								$.each($.parseJSON(data), function(idx,obj){
+									var date = new Date(1000*obj.date);
+									date = date + "";
+									date = date.substring(0, date.length-14);
+									html = html + "<pre>"+obj.comment+"<span style='margin-left : 180px'>"+date+"</span></pre>"			
+								})
+								if (s=="edit_history") {
+									 html = html + "<a href = 'javascript:void(0)' onclick = "+"document.getElementById('light').style.display='none';"+">Close Window</a>"
+									 $("#light").append($(html));
+								}
+								else {
+									html = html + "<a href = 'javascript:void(0)' onclick = "+"document.getElementById('lighten').style.display='none';"+">Close Window</a>"
+									$("#lighten").append($(html));
+								}
+								html = ""
+							})
+						}
+						else if (s=="total_likes" || s=="total_like"){
+							var comment_id = $(this).attr("class");
+							if (s=="total_likes") status = 'primary'
+							else status = 'secondary'
+							$.get('/movies/comment/show_likes/',{ commentid : comment_id, status : status },function(data){
+								$.each($.parseJSON(data), function(idx,obj){
+									var start = "<a href ='/movies/profile/"+obj.username+"/'><img src='/home/vijender/workspace/DBMS/media/"+obj.picture+"/' width='60px' height='60px'><b style='position : absolute; margin-left : 10px;'>"+obj.first + " " + obj.last +"</b></a><b style='position : relative; top : 20px; left : 14px'>"+obj.total +" Followers</b>"
+									html = "<div class='list-group-item' id='popup'>"+start;
+									if (obj.status == "NO"){
+										html = html + "<input class='button-link' style='width : 170px; position : absolute; left : 430px' type='submit' id='"+obj.username+"' value='Follow'>"
+									}
+									else if (obj.status == "YES"){
+										html = html + "<input class='button-link' style='width : 170px; background-color : #C6C6FF; position : absolute; left : 430px' type='submit' id='"+obj.username+"' value='Following'>"
+									}
+									html = html + "</div>"
+									if (s == "total_likes")	
+										$("#light").append($(html));
+									else 	$("#lighten").append($(html));
+									html = ""
+								})
+								if (s == "total_likes"){
+									html = "<a href = 'javascript:void(0)' onclick = "+"document.getElementById('light').style.display='none';"+">Close Window</a>"
+									$("#light").append($(html))
+									$("#light").css("display","block")
+								}
+								else{
+									html = "<a href = 'javascript:void(0)' onclick = "+"document.getElementById('lighten').style.display='none';"+">Close Window</a>"
+									$("#lighten").append($(html))
+									$("#lighten").css("display","block")
+								}
+							})
+							i = i-1;
+						}
+						else if (s=="show"){
+							$(this).closest('.list-group-item').find("#comment_status").show();
+							i = i-1;
+						}
+						else {
+							i = i-1;
+						}
+					}
+				})
+			})
+		</script>
+		<style>
+			body {
+				margin-top: 60px;
+			}
+			#abhi{
+				float:left
+			}
+			.button-link {
+				font-family: Verdana;
+				font-size: 15px; 
+				padding: 10px 15px;
+				background: #4479BA;
+				color: #FFF;
+				-webkit-border-radius: 4px;
+				-moz-border-radius: 4px;
+				border-radius: 4px;
+				border: solid 1px #20538D;
+				text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+				-webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+				-moz-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+				box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+				-webkit-transition-duration: 0.2s;
+				-moz-transition-duration: 0.2s;
+				transition-duration: 0.2s;
+			}
+			.button-link:hover, .button-link:focus {
+				background: #356094;
+				border: solid 1px #2A4E77;
+				text-decoration: none;
+			}
+			.white_content {
+				display: none;
+				position: absolute;
+				top: 10px;
+				left: 75px;
+				width: 700px;
+				padding: 16px;
+				border: 16px solid #5A7DB2;
+				background-color: #ecf0f1;
+				z-index:1002;
+				overflow: auto;
+			}
+		</style>	
+	</head>
+	<body>
+		<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+			<div class="container">
+					<ul class="nav navbar-nav pull-left">
+						<li class="dropdown" style="margin-left : -50px">
+							<ul class="nav navbar-nav pull-left">
+								<li class="dropdown"> 
+									<a href="/movies/">HOME PAGE</a>
+								</li>
+								<li>
+									<a href="/movies/add/">ADVANCED SEARCH</a>
+								</li>		
+								<li>
+									<a href="/movies/view/top100/">DIRECTOR's CUT TOP 100</a>
+								</li>
+								<li>
+									<a href="/movies/view/bottom100/">DIRECTOR's CUT BOTTOM 100</a>
+								</li>
+							</ul>
+						</li>
+					</ul>
+				{% if user.is_authenticated %}
+					<ul class="nav navbar-nav pull-left" style="margin-left : 32px">
+						<li class="dropdown">
+							<img src = "/home/vijender/workspace/DBMS/media/{{ profile.picture }}" width="60" height="60" />
+						</li>
+						<li style="margin-left : 10px">
+							<a href="/movies/profile/{{ user.username }}">VIEW PROFILE</a>
+						</li>
+						<li style="margin-left : -10px">
+							<a href="/movies/latest_updates/">VIEW UPDATES</a>
+						</li>
+						<ul class="nav navbar-nav pull-left" id = "menu">
+							<li style="padding : 0px 10px 30px 5px" class="dropdown">OPTIONS <b class="caret"></b>
+								<ul class = "sub-menu">
+									<div class="list-group" style="background-color : white; overflow-y : auto; width : 200px; position : absolute; top : 38px; left : -110px">
+										<a href="/movies/reset/password"><div class="list-group-item"><li>Change Password</li></div></a>
+										<a href="/movies/reset/profile"><div class="list-group-item"><li>Update Profile</li></div></a>
+										<a href="/movies/logout/"><div class="list-group-item"><li>Logout</li></div></a>
+									</div>
+								</ul>
+							</li>
+						</ul>
+					</ul>
+				{% else %}
+					<ul class="nav navbar-nav pull-right">
+						<li class="dropdown">
+							<ul class="nav navbar-nav pull-right">
+								<li class="dropdown"> 
+									<a href="/movies/login">Sign In</a>
+								</li>
+								<li>
+									<a href="/movies/register/">Sign Up</a>
+								</li>		
+							</ul>
+						</li>
+					</ul>
+				{% endif %}
+			</div>
+		</nav>
+		<div id="container" style="width:1020px; margin-left:auto; margin-right:auto; ">
+			<div id="header" style="margin-bottom : 4px; background-color: #7E79AC ;">
+				<b><span style = "font-size : 20px">TITLE : {{ ver.0.0 }}</span></b></div>
+				<div id="menu" style="background-color: #EAFC4D;height:460px;width:550px;float:left;">
+					<b>Year OF Release  : {{ ver.0.1 }} </b><br><br>
+					<b>Certification :  {{ ver.0.2 }} </b><br><br>
+					<b>Running Time :  {{ ver.0.3 }} Minutes </b> <br><br>
+					<b>Director :  <a id = "dir" href = "/movies/director/{{ dir }}">{{ ver.0.4 }}</a> </b><br><br>
+ 					<b>Language :  {{ ver.0.5 }} </b><br><br>
+ 					<b>Country  :  {{ ver.0.6 }} </b> <br><br>
+ 					<b id="rates"> IMDBRating : {% if ver.0.7 < 0 %} N/A {% else %} {{ ver.0.7 }} {% endif %}</b> <br><br>
+ 					<b id="votes"> IMDBVotes :  {% if ver.0.8 < 0 %} N/A {% else %} {{ ver.0.8 }} {% endif %} </b><br><br>
+ 					<b> Genre :</b> {% for gen in genre %} 
+								<b><a href = "/movies/genre/{{ gen.1 }}">{{ gen.1 }}</a></b> &nbsp; &nbsp;
+								{% endfor %} <br><br> 
+					<b>	Actors :</b> {% for act in actor %}
+							<b>	<a href = "/movies/actor/{{ act.2 }}">{{ act.1 }}</a></b> &nbsp; &nbsp;
+										{% endfor %} </b> <br>
+					{% if user.is_authenticated %}
+						{% if res == "no" %}
+							<br>
+								<b id="first">RATE THIS MOVIE : </b>
+								{% csrf_token %}
+								<select required id ="select" name="carlist" form="carform" >
+									<option></option>
+									<option value="1">1</option>
+									<option value="2">2</option>
+									<option value="3">3</option>
+									<option value="4">4</option>
+									<option value="5">5</option>
+									<option value="6">6</option>
+									<option value="7">7</option>
+									<option value="8">8</option>
+									<option value="9">9</option>
+									<option value="10">10</option>
+								</select>
+								<input id="sub" type="submit" value = "RATE">
+								<p id="res" hidden></p>
+						{% else %}
+							<br><p id="result"><b>YOUR RATING : </b> {{ my_rate.2 }} </p><br>
+						{% endif %}
+					{% endif %}
+				</div>
+				<div style="margin-bottom : 4px; margin-left : 4px; height:460px; width:466px; float:left;">
+					<a><img src = "/home/vijender/workspace/DBMS/media/{{ ver.0.9 }}" alt="No Image" width="464" height="460" /></a>
+				</div>
+			</div>
+		</div>
+		<div id="container" style="margin-top : 30px; width:1020px; clear:both; margin-left:auto; margin-right:auto; ">
+			<div id="header" style=" background-color: #7E79AC ;">
+				<b><span style = "font-size : 20px">User Who Like This Also Liked</span></b>
+			</div>
+			{%  for rec in recom %}
+			<div id="abhi" style ="margin-top : 5px">
+				<a style="margin-left : 4px"; href="/movies/{{ rec.0 }}"><img src = "/home/vijender/workspace/DBMS/media/{{ rec.1 }}" width="200" height="200" /></a>
+			</div>
+			{% endfor %}
+		</div>
+			<div style="margin-top : 620px; width : 1020px; background-color:#FFA500; clear:both; text-align:center; margin-left:auto; margin-right:auto;">
+				<a href="/movies/">Back To Home Page</a>
+			</div>
+		{% if user.is_authenticated %}	
+			 {% if length > 0 %}
+			 <div class="panel-footer" style="background-color: #ecf0f1; margin-top : 5px; margin-left:auto; margin-right:auto; width : 1020px;">					      
+				<div class="form-group" style="margin-left : 10px">
+					<strong>Post a comment:</strong><br>
+				    <textarea maxlength="300" id="comment" style="height : 150px; width : 700px"></textarea><br>
+				    <li hidden id="comment_error"><b style="color : red">Please add some comment before posting</b></li>
+				    <input type="submit" id="submit_comment" style="background-color: #3498db; border-color: #3498db;" value="Post Comment"/>
+				</div>
+				<div class="list-group">
+					{% for comments in comment %}
+						<div id="{{ comments.6 }}" class="list-group-item">
+							<a href="/movies/profile/{{ comments.4 }}">
+								<img src="/home/vijender/workspace/DBMS/media/{{comments.5}}" width="60px" height="60px"/>
+								<b style="position : absolute; margin-left : 10px;">{{ comments.2 }} {{ comments.3 }}</b>
+							</a>
+							<b id="date" style="position : absolute; margin-left : 700px;">{{ comments.1.0 }}</b><br>
+							<a id="total_likes" class="{{ comments.6 }}" href="javascript:void(0)">{{ comments.7 }} likes</a>
+							<div style="margin-left : 70px; margin-top : -50px; width : 700px;">
+								<pre id="comment_display">{{ comments.0.0 }}</pre>
+							</div>
+							<div style="margin-left : 70px">
+								{% if comments.8 == "yes" %}
+									<a id="edit_history" class="{{ comments.6 }}" href = "javascript:void(0)" style="color : grey" onclick = "document.getElementById('light').style.display='block';">show edit history</a>
+									<div id="light" class="white_content">
+									</div>
+								{% endif %}
+								{% if user.username == comments.4 %} 
+									<input id="edit" style="background-color : #ecf0f1" type="submit" value="edit"> 
+									<input id="delete" style="background-color : #ecf0f1" type="submit" value="delete"> 
+								{% endif %}
+								{% if comments.9 == "unliked" %}
+									<input id="like" style="background-color : #ecf0f1" type="submit" value="like">
+								{% else %}
+									<input id="like" style="background-color : #ecf0f1" type="submit" value="unlike">
+								{% endif %}	
+								<input id="comment" style="background-color : #ecf0f1" type="submit" value="comment">
+							</div>
+							<div hidden id="editing">
+								<textarea maxlength="300" style="height : 30px; margin-left : 70px; width : 700px"></textarea><br>
+								<li hidden id="comment_error" style="margin-left : 70px"><b style="color : red">Please add some comment before posting</b></li>
+								<input type="submit" id="edit_comment" style="background-color : #3498db; margin-left : 70px; border-color : #3498db" value="Post Comment"/>
+							</div>
+							<div id="comment_status" class='{{ comments.6 }}' style="margin-top : 10px; margin-left:130px; width : 700px;">
+								{% for extras in comments.10 %}
+									<div id="{{ extras.6 }}" style="width : 700px; background-color: #ecf0f1;" class="list-group-item">
+										<a href='/movies/profile/{{ extras.4 }}'>
+											<img src='/home/vijender/workspace/DBMS/media/{{ extras.5 }}' width='60px' height='60px'/>
+											<b style='position : absolute; margin-left : 20px;'>{{ extras.2 }} {{ extras.3 }}</b>
+										</a>
+										<b style='position : absolute; margin-left : 400px'>{{ extras.1.0 }}</b><br>
+										<a id='total_like' class="{{ extras.6 }}" style='margin-top : 20px;' href='javascript:void(0)'>{{ extras.7 }} likes</a>
+										<div style='margin-left : 70px; margin-top : -50px; width : 600px;'>
+											<pre id='comment_display'>{{ extras.0.0 }}</pre>
+										</div>
+										<div style='margin-left : 80px'>
+											{% if extras.8 == "yes" %}
+												<a id="edit_hist" class="{{ extras.6 }}" href = "javascript:void(0)" style="color : grey" onclick = "document.getElementById('lighten').style.display='block';">show edit history</a>
+												<div id="lighten" class="white_content">
+												</div>
+											{% endif %}
+											{% if user.username == extras.4 %} 
+												<input id='edit_secondary' style='background-color : #ecf0f1' type='submit' value='edit'>
+												<input id='delete_secondary' style='background-color : #ecf0f1' type='submit' value='delete'>
+											{% endif %}
+											{% if extras.9 == "unliked" %}								
+												<input id='like_secondary' style='background-color : #ecf0f1' type='submit' value='like'>
+											{% else %}
+												<input id="like_secondary" style="background-color : #ecf0f1" type="submit" value="unlike">
+											{% endif %}
+										</div>
+										<div hidden style="margin-top : 10px" id="editing">
+											<textarea maxlength="300" style="height : 30px; margin-left : 40px; width : 550px"></textarea><br>
+											<li hidden id="comment_error" style="margin-left : 40px"><b style="color : red">Please add some comment before posting</b></li>
+											<input type="submit" id="edit_comment" style="background-color : #3498db; margin-left : 40px; border-color : #3498db" value="Post Comment"/>
+										</div>
+									</div>
+								{% endfor %}
+							</div>
+						</div>
+					{% endfor %}
+				</div>
+			</div>
+			{% endif %}
+		{% else %}
+			{% if length > 0 %}
+			<div class="panel-footer" style="background-color: #ecf0f1; margin-top : 5px; margin-left:auto; margin-right:auto; width : 1020px;">					      
+				<div class="list-group">
+					{% for comments in comment %}
+						<div class="list-group-item">
+							<a href="/movies/profile/{{ comments.4 }}">
+								<img src="/home/vijender/workspace/DBMS/media/{{comments.5}}" width="60px" height="60px"/>
+								<b style="position : absolute; margin-left : 10px;">{{ comments.2 }} {{ comments.3 }}</b>
+							</a>
+							<b style="position : absolute; margin-left : 700px;">{{ comments.1.0 }}</b><br>
+							<b>{{ comments.7 }} likes</b>
+							<div style="margin-left : 70px; margin-top : -50px; width : 700px;">
+								<pre>{{ comments.0.0 }}</pre>
+							</div>
+							<a style="margin-left : 70px" href="javascript:void(0)" id="show">view {{ comments.9 }} comments</a>
+							<div hidden id="comment_status" style="margin-top : 10px; margin-left:130px; width : 700px;">
+								{% for extras in comments.8 %}
+									<div style="width : 700px; background-color: #ecf0f1;" class="list-group-item">
+										<a href='/movies/profile/{{ extras.4 }}'>
+											<img src='/home/vijender/workspace/DBMS/media/{{ extras.5 }}' width='60px' height='60px'/>
+											<b style='position : absolute; margin-left : 20px;'>{{ extras.2 }} {{ extras.3 }}</b>
+										</a>
+										<b style='position : absolute; margin-left : 400px'>{{ extras.1.0 }}</b><br>
+										<b id='total_like' class="{{ extras.6 }}" style='margin-top : 20px;' href='javascript:void(0)'>{{ extras.7 }} likes</b>
+										<div style='margin-left : 70px; margin-top : -50px; width : 600px;'>
+											<pre id='comment_display'>{{ extras.0.0 }}</pre>
+										</div>
+									</div>
+								{% endfor %}
+							</div>
+						</div>	
+					{% endfor %}
+				</div>
+			</div>
+			{% endif %}
+		{% endif %}
+	</body>
+</html>

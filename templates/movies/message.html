@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+{% load static %}
+	<head>
+		<title>UPDATES</title>
+		<link href="{% static 'bootstrap.css' %}" rel="stylesheet">
+		<link href="{% static 'drag.css' %}" rel="stylesheet">
+		<script src="{% static 'jquery.js' %}"></script>	
+		<script>
+			$(document).ready(function(){
+			})
+		</script>
+		<style>
+			
+		</style>
+	</head>
+	<body>
+		<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+			<div class="container">
+					<ul class="nav navbar-nav pull-left">
+						<li class="dropdown">
+							<ul class="nav navbar-nav pull-right">
+								<li class="dropdown"> 
+									<a href="/movies/">HOME PAGE</a>
+								</li>
+								<li>
+									<a href="/movies/add/">ADVANCED SEARCH</a>
+								</li>
+							</ul>
+						</li>
+					</ul>
+				{% if user.is_authenticated %}
+					<ul class="nav navbar-nav pull-left" style="margin-left : 300px">
+						<li>
+							<ul class="nav navbar-nav pull-right">
+								<a href="/movies/profile/{{ user.username }}/"><img src = "/home/vijender/workspace/DBMS/media/{{ pic }}" width="60" height="60" /></a>
+							</ul>
+						</li>
+						<li style="margin-left : 10px">
+							<a href="/movies/transaction/">BUY OR SELL</a>
+						</li>
+						<li  style="margin-left : 10px">
+							<a href="/movies/profile/{{ user.username }}/">VIEW PROFILE</a>
+						</li>
+						<ul class="nav navbar-nav pull-left"  style="margin-left : 10px" id = "menu">
+							<li style="padding : 0px 10px 30px 5px" class="dropdown">OPTIONS <b class="caret"></b>
+								<ul class = "sub-menu">
+									<div class="list-group" style="background-color : white; overflow-y : auto; width : 200px; position : absolute; top : 38px; left : -110px">
+										<a href="/movies/reset/password"><div class="list-group-item"><li>Change Password</li></div></a>
+										<a href="/movies/reset/profile"><div class="list-group-item"><li>Update Profile</div></li></a>
+										<a href="/movies/logout/"><div class="list-group-item"><li>Logout</li></div></a>
+									</div>
+								</ul>
+							</li>
+						</ul>
+					</ul>	
+				{% endif %}
+			</div>
+		</nav>
+		<div>
+		</div>
+	</body>
+</html>

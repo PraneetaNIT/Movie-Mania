@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+	<head>		
+		<link href="{% static 'bootstrap.css' %}" rel="stylesheet">
+		<link href="{% static 'drag.css' %}" rel="stylesheet">
+		<script src="{% static 'jquery.js' %}"></script>	
+		<script>
+			$(document).ready(function(){
+				$('input[type="submit"]').on('click', function(){
+					var type = $(this).val();
+					if (type == "Following"){
+						var s = $(this).attr('id');
+						$(this).val('Follow '+s);
+						$(this).css('background-color','#4479BA');
+						$.get('/movies/unfollow/',{ unfollow : s },function(data){
+						})
+					}
+					else {
+						var s = $(this).attr('id');
+						$(this).val('Following');
+						$(this).css('background-color','#C6C6FF');
+						$.get('/movies/follow/',{ follow : s },function(data){
+						})
+					}
+				});
+			})
+		</script>
+		<style>
+			.button-link {
+				font-family: Verdana;
+				font-size: 15px; 
+				padding: 5px 5px;
+				background: #4479BA;
+				color: #FFF;
+				-webkit-border-radius: 4px;
+				-moz-border-radius: 4px;
+				border-radius: 4px;
+				border: solid 1px #20538D;
+				text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+				-webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+				-moz-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+				box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+				-webkit-transition-duration: 0.2s;
+				-moz-transition-duration: 0.2s;
+				transition-duration: 0.2s;
+			}
+			.button-link:hover, .button-link:focus {
+				background: #356094;
+				border: solid 1px #2A4E77;
+				text-decoration: none;
+			}
+		</style>
+	</head>
+	<body>
+		<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+		{% csrf_token %}
+			<div class="container">
+					<ul class="nav navbar-nav pull-left">
+						<li class="dropdown">
+							<ul class="nav navbar-nav pull-right">
+								<li class="dropdown"> 
+									<a href="/movies/">HOME PAGE</a>
+								</li>
+								<li>
+									<a href="/movies/add/">ADVANCED SEARCH</a>
+								</li>
+							</ul>
+						</li>
+					</ul>
+				{% if user.is_authenticated %}
+					<ul class="nav navbar-nav pull-left" style="margin-left : 300px">
+						<li>
+							<ul class="nav navbar-nav pull-right">
+								<a href="/movies/profile/{{ user.username }}/"><img src = "/home/vijender/workspace/DBMS/media/{{ profile.picture }}" width="60" height="60" /></a>
+							</ul>
+						</li>
+						<li style="margin-left : 10px">
+							<a href="/movies/transaction/">BUY OR SELL</a>
+						</li>
+						<li  style="margin-left : 10px">
+							<a href="/movies/latest_updates/">VIEW UPDATES</a>
+						</li>
+						<ul class="nav navbar-nav pull-left"  style="margin-left : 10px" id = "menu">
+							<li style="padding : 0px 10px 30px 5px" class="dropdown">OPTIONS <b class="caret"></b>
+								<ul class = "sub-menu">
+									<div class="list-group" style="background-color : white; overflow-y : auto; width : 200px; position : absolute; top : 38px; left : -110px">
+										<a href="/movies/reset/password"><div class="list-group-item"><li>Change Password</li></div></a>
+										<a href="/movies/reset/profile"><div class="list-group-item"><li>Update Profile</li></div></a>
+										<a href="/movies/logout/"><div class="list-group-item"><li>Logout</li></div></a>
+									</div>
+								</ul>
+							</li>
+						</ul>
+					</ul>	
+				{% endif %}
+			</div>
+		</nav>
+		{% if key == "follower" %}
+			<div style="margin-top : 100px; margin-left : 40px; background-color : #b0c4de; width : 1250px" id="follower">
+				<p><b>Follower ({{ follower }})</b></p>
+				{% for pro in profiles %}
+					<div style="float : left; margin-right : 75px; margin-top : 10px; width : 170px">
+						<a id="{{ pro.1 }}" href="/movies/profile/{{ pro.1 }}/" ><img src = "/home/vijender/workspace/DBMS/media/{{ pro.0.picture }}" width="100" height="100" /></a>
+						<a href="/movies/profile/{{ pro.1 }}/" style="position : absolute; margin-left : 6px; "><b>{{ pro.2 }} {{ pro.3 }}</b></a><br>
+						{% if pro.4 != "SAME" %}
+							{% if pro.4 == "NO" %}
+								<input class="button-link" style="width : 110px; position : relative; left : 110px; top : -35px" type="submit" id="{{ pro.1 }}" value="Follow" />
+							{% else %}
+								<input class="button-link" style="width : 110px; background-color : #C6C6FF; position : relative; left : 110px; top : -35px" type="submit" id="{{ pro.1 }}" value="Following" />
+							{% endif %}
+						{% endif %}
+					</div>
+				{% endfor %}
+			</div>
+		{% else %}
+		<div style="margin-top : 100px; margin-left : 40px; background-color : #b0c4de; width : 1250px" id="follower">
+			<p><b>Following ({{ following }})</b></p>
+			{% for pro in profiles %}
+				<div style="float : left; margin-right : 75px; margin-top : 10px; width : 170px">
+					<a id="{{ pro.1 }}" href="/movies/profile/{{ pro.1 }}/" ><img src = "/home/vijender/workspace/DBMS/media/{{ pro.0.picture }}" width="100" height="100" /></a>
+					<a href="/movies/profile/{{ pro.1 }}/" style="position : absolute; margin-left : 6px; "><b>{{ pro.2 }} {{ pro.3 }}</b></a><br>
+					{% if pro.4 == "NO" %}
+						<input class="button-link" style="width : 110px; position : relative; left : 110px; top : 35px" type="submit" id="{{ pro.1 }}" value="Follow" />
+					{% else %}
+						<input class="button-link" style="width : 110px; background-color : #C6C6FF; position : relative; left : 110px; top : -35px" type="submit" id="{{ pro.1 }}" value="Following" />
+					{% endif %}
+				</div>
+			{% endfor %}
+		</div>
+		{% endif %}
+	</body>
+</html>

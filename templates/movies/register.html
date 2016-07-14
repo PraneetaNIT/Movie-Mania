@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+	<head>		
+		<link href="{% static 'bootstrap.css' %}" rel="stylesheet">
+		<link href="{% static 'form.css' %}"  rel="stylesheet">
+		<script src="{%static 'jquery.js' %}"></script>
+		<script src="{%static 'forms.js' %}"></script>
+		<script>
+			$(document).ready(function(){
+				var check = false;
+				$("#user_form").ajaxForm(function(data){
+					if ($.parseJSON(data) == "NO") {
+						alert("Registered Successfully,\n login to view your profile");
+						window.location.href = 'http://127.0.0.1:8000/movies/login/';
+					}
+					else if ($.parseJSON(data) == "EMAIL"){
+						$("#mail").html("<b>This E-Mail has already been registered.</b>");
+						$("#mail").show();
+					}
+					else if ($.parseJSON(data) == "NAME"){
+						$("#user").html("<b>User with this Username already exists.</b>");
+						$("#user").show();
+					}
+					else if ($.parseJSON(data) == "BOTH"){
+						$("#mail").html("<b>This E-Mail has already been registered.</b>");
+						$("#user").html("<b>User with this Username already exists.</b>");
+						$("#mail").show();
+						$("#user").show();
+					}
+					else {
+						$.each($.parseJSON(data), function(idx,obj){
+							$("#user").html("<b>"+obj+"</b>");
+							$("#user").show();
+						})
+					}
+				})
+				$("#sub").click(function(e){
+					var status = "YES";
+					var username = $("#id_username").val();
+					var password = $("#id_password").val();
+					var email = $("#id_email").val();
+					var sex = $("input[name=sex]:radio:checked").val();
+					var age = $("#id_age").val();
+					var first = $("#id_first_name").val();
+					var last = $("#id_last_name").val();
+					var occupation = $("#id_occupation").val();
+					var zipcode = $("#id_zipcode").val();
+					if (username == "" || password == "" || first == "" || last == "" || email == "" || !sex || age == "" || age != "" || occupation == "" || zipcode == ""){
+						if (username == "") {
+							$("#user").html("<b>This Field is Required</b>");
+							$("#user").show();
+							status = "NO";
+						}
+						if (password == "")	{
+							$("#pass").show();
+							status = "NO";	
+						}
+						if (email == "") {
+							$("#mail").show();
+							status = "NO";
+						}
+						if (first == ""){
+							$("#first").show();
+							status = "NO";
+						}
+						if (last == ""){
+							$("#last").show();
+							status = "NO";
+						}
+						if (!sex){
+							$("#sexy").show();
+							status = "NO";
+						}
+						if (age==""){
+							$("#age").html("<b>This Field is Required</b>");
+							$("#age").show();
+							status = "NO";
+						}
+						if (occupation==""){
+							$("#occ").show();
+							status = "NO";
+						}
+						if (zipcode==""){
+							$("#zip").show();
+							status = "NO";
+						}
+						if (age != "") {
+							for (i=0; i<age.length; i++){
+								var c = age.charAt(i).charCodeAt(0);
+								if(c <48 || c >57){
+									$("#age").html("<b>Age Must Be Numerical</b>");
+									$("#age").show();
+									break;
+								}
+							}
+							if (i != age.length) {
+								status = "NO";
+							}
+						}
+						if (status == "NO") return false;
+						else return true;
+					}
+				})
+				$("#user_form").keyup(function(){
+					$("#user").hide(); $("#pass").hide(); $("#mail").hide();  $("#sexy").hide();
+					$("#zip").hide(); $("#age").hide(); $("#occ").hide();  $("#first").hide(); $("#last").hide(); 
+				})
+			})
+		</script>
+		<style>
+			body {
+				margin-top: 60px;
+			}
+			span{
+				display: inline-block;
+			}
+			#big-form li{
+				margin-left : 100px; 
+				color: red;
+			}
+		</style>
+	</head>
+	<body>
+		<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+			<div class="container">
+					<ul class="nav navbar-nav pull-left">
+						<li class="dropdown">
+							<ul class="nav navbar-nav pull-right">
+								<li class="dropdown"> 
+									<a  href="/movies/">HOME PAGE</a>
+								</li>
+								<li>
+									<a href="/movies/add/">ADVANCED SEARCH</a>
+								</li>
+								<li>
+									<a href="/movies/view/top100/">DIRECTOR's CUT TOP 100</a>
+								</li>
+								<li>
+									<a href="/movies/view/bottom100/">DIRECTOR's CUT BOTTOM 100</a>
+								</li>		
+							</ul>
+						</li>
+					</ul>
+			</div>
+		</nav>
+			<h1 class="text-center" style="color : white"> REGISTER HERE </h1>
+			    <div style="width : 500px; margin-left : 400px" id="big-form" class="well auth-box">
+					<form id="user_form" method="post" action="/movies/register/" enctype="multipart/form-data">
+						{% csrf_token %}
+						<fieldset>
+							<legend>Sign Up</legend>
+							<div class="form-group">
+								<label class=" control-label" for="textinput">  
+									Username: <span style="margin-left : 10px">{{ user_form.username }}</span><br>
+									<li id="user" hidden></li>
+									Password: <span style="margin-top : 20px; margin-left : 15px; ">{{ user_form.password }}</span><br>
+									<li id="pass" hidden><b>This Field is Required</b></li>
+									First Name: <span style="margin-top : 20px; margin-left : 2px; ">{{ user_form.first_name }}</span><br>
+									<li id="first" hidden><b>This Field is Required</b></li>
+									Last Name: <span style="margin-top : 20px; margin-left : 8px; ">{{ user_form.last_name }}</span><br>
+									<li id="last" hidden><b>This Field is Required</b></li>
+									E-Mail ID: <span style="margin-top : 20px; margin-left : 20px">{{ user_form.email }}</span><br>
+									<li id="mail" hidden><b>This Field is Required</b></li>
+									Sex: <span style="margin-top : 20px; margin-left : 82px"> 
+											<input type="radio" name="sex" id="male" value="male">
+											<label for="male">Male</label>
+											<input style="margin-left : 42px" type="radio" name="sex" id="female" value="female">
+											<label for="female">Female</label>
+										</span><br>
+									<li id="sexy" hidden><b>This Field is Required</b></li>
+									Age: <span style="margin-top : 20px; margin-left : 60px">{{ user_profile.age }}</span><br>
+									<li id="age" hidden></li>
+									Occupation: <span style="margin-top : 20px; margin-left : 3px">{{ user_profile.occupation }}</span><br>
+									<li id="occ" hidden><b>This Field is Required</b></li>
+									Zipcode: <span style="margin-top : 20px; margin-left : 29px">{{ user_profile.zipcode }}</span><br>
+									<li id="zip" hidden><b>This Field is Required</b></li>
+									Image: <span style="margin-top : 20px; margin-left : 43px">{{ user_profile.picture }}</span><br>
+								</label>
+							</div>
+							<input id="sub" type="submit" name="submit" value="Register" />
+						</fieldset>
+					</form>
+    </body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+	{% load static %}
+	<head>		
+		<link href="{% static 'bootstrap.css' %}" rel="stylesheet">
+		<link href="{% static 'form.css' %}"  rel="stylesheet">
+		<script src="{%static 'jquery.js' %}"></script>
+		<script src="{%static 'csrf.js' %}"></script>
+		<script>
+			$(document).ready(function(){
+				$("#sub").click(function(){
+					var user = $('#id_username').val();
+					var pass = $('#id_password').val();
+					$.post('/movies/login/',{ username : user , password : pass },function(data){
+						if (data=="2" || data=="3"){
+							$('#id_password').val('');
+							if (data=="2"){
+								$("#error").html("<b style='color : red'>The password is valid, but the account has been disabled!</b>");
+							}
+							else if (data=="3"){
+								$("#error").html("<b style='color : red'>Either Username or Password is incorrect</b>")
+							}
+							$("#error").show();
+						}
+						else {
+							window.location.href = 'http://127.0.0.1:8000/movies/profile/'+data;
+						}
+					}) 
+				})
+				$("#id_password").keyup(function(){
+					$("#error").hide();
+				})
+			})
+		</script>
+		<style>
+			body {
+				margin-top: 60px;
+			}
+		</style>
+	</head>
+	<body>
+		<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+			<div class="container">
+					<ul class="nav navbar-nav pull-left">
+						<li class="dropdown">
+							<ul class="nav navbar-nav pull-right">
+								<li class="dropdown"> 
+									<a  href="/movies/">HOME PAGE</a>
+								</li>
+								<li>
+									<a href="/movies/add/">ADVANCED SEARCH</a>
+								</li>
+								<li>
+									<a href="/movies/view/top100/">DIRECTOR's CUT TOP 100</a>
+								</li>
+								<li>
+									<a href="/movies/view/bottom100/">DIRECTOR's CUT BOTTOM 100</a>
+								</li>	
+							</ul>
+						</li>
+					</ul>
+			</div>
+		</nav>
+		<h1 class="text-center" style="color : white"> LOGIN HERE </h1>
+		    <div style="width : 500px; margin-left : 400px" id="big-form" class="well auth-box">
+					<fieldset>
+						<legend>Sign In</legend>
+						<div class="form-group">
+							<label class=" control-label" for="textinput"> 
+									Username: <span style="margin-left : 5px">{{ login_form.username }}</span><br>
+									Password: <span style="margin-left : 10px">{{ login_form.password }}</span>
+									<li id="error" hidden style="margin-left : 20px"></li>
+							</label>
+							<br><b><a href="/movies/sure/password/reset/" style="color : blue;">Forget Password?</a></b>
+						</div>
+						<input class="btn btn-primary" id="sub" style="margin-left : 100px; width: 50%; height: 32px; font-size: 13px;" type="submit" name="submit" value="Login" />
+					</fieldset>
+			</div>
+			<div style="width : 500px; margin-top : -20px; margin-left : 400px; background: #5858FA">
+				<b style="color : white; margin-left : 80px">Don't have a account? &nbsp;<u><a href="/movies/register/" style="color : white">Click Here</u></a> &nbsp; to register</b>
+			</div>
+	</body>
+</html>

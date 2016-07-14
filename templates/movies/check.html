@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+{% load static %}
+	<head>
+		<title>
+			QUERY RESULT
+		</title>
+		<link href="{% static 'bootstrap.css' %}" rel="stylesheet">
+		<link href="{% static 'form.css' %}"  rel="stylesheet">
+		<link href="{% static 'drag.css' %}"  rel="stylesheet">
+		<script src="{% static 'jquery.js' %}"></script>
+		<script>
+			var index = -1;
+			$(document).ready(function(){
+				$("#username").keyup(function(e){
+					var query = $(this).val();
+					if(query.length > 0){
+						$("#values").show();
+						$.get('/movies/suggestion/',{ suggestion : query },function(data){
+							var s = data.split("\n");
+							$('#results').empty();
+							for (i=0; i<s.length-1; i++){
+								$('#results').append($("<div class='capitals'><p class='country'>"+s[i]+"</p></div>"));
+							}
+							if(e.which == 38){
+							  index--;
+								if(index < 0){
+									index = 0;
+								}
+								change_selection();
+							}
+							else if(e.which == 40){
+								index++;
+								if(index > $('#results').find('.capitals').length - 1){
+									index = $('#results').find('.capitals').length-1;
+								}
+								change_selection();
+							}
+							else if(e.which == 27){		// esc
+								index = -1;
+								$options.removeClass('selected');
+								$("#values").hide();
+							}
+							else if(e.which == 13){   // enter
+								if(index > -1){
+									if($('#results').find('.capitals').hasClass('selected')){
+										$('#results').find('.selected').click();
+										index=-1;
+										$('#results').find('.capitals').removeClass('selected');
+									}
+								}
+							}
+						})
+					}
+					else{
+						$('#results').empty();
+						$("#values").hide();
+					}
+				})
+				$("#results").delegate('.capitals','mouseenter', function() {
+					var a = $(this).find("p.country").text();
+					$("#username").val(a);
+				});
+				function change_selection(){
+					$('#results').find('.capitals').removeClass('selected');
+					$('#results').find('.capitals').eq(index).addClass('selected');
+				}
+			})
+		</script>
+		<style>
+			body {
+				margin-top: 60px;
+			}
+			#abhi{
+				margin-left: 10px;
+				float:left
+			}
+			p{
+				text-indent:20px;
+				margin-bottom:2px;
+			}
+			.country{
+				margin-top:0px;
+				font-size:12px;
+				height:30px;
+				border:1px solid grey;
+			}
+			.selected{
+				background:blue;
+			}
+		</style>	
+	</head>
+	<body>
+		<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+			<div class="container">
+					<ul class="nav navbar-nav pull-left">
+						<li class="dropdown" style="margin-left : -50px">
+							<ul class="nav navbar-nav pull-left">
+								<li class="dropdown"> 
+									<a href="/movies/">HOME PAGE</a>
+								</li>
+								<li>
+									<a href="/movies/add/">ADVANCED SEARCH</a>
+								</li>	
+								<li>
+									<a href="/movies/view/top100/">DIRECTOR's CUT TOP 100</a>
+								</li>
+								<li>
+									<a href="/movies/view/bottom100/">DIRECTOR's CUT BOTTOM 100</a>
+								</li>
+							</ul>
+						</li>
+					</ul>
+				{% if user.is_authenticated %}
+					<ul class="nav navbar-nav pull-left" style="margin-left : 32px">
+						<li class="dropdown">
+							<img src = "/home/vijender/workspace/DBMS/media/{{ profile.picture }}" width="60" height="60" />
+						</li>
+						<li style="margin-left : 10px">
+							<a href="/movies/profile/{{ user.username }}">VIEW PROFILE</a>
+						</li>
+						<li style="margin-left : -10px">
+							<a href="/movies/latest_updates/">VIEW UPDATES</a>
+						</li>
+						<ul class="nav navbar-nav pull-left" id = "menu">
+							<li style="padding : 0px 10px 30px 5px" class="dropdown">OPTIONS <b class="caret"></b>
+								<ul class = "sub-menu">
+									<div class="list-group" style="background-color : white; overflow-y : auto; width : 200px; position : absolute; top : 38px; left : -110px">
+										<a href="/movies/reset/password"><div class="list-group-item"><li>Change Password</li></div></a>
+										<a href="/movies/reset/profile"><div class="list-group-item"><li>Update Profile</li></div></a>
+										<a href="/movies/logout/"><div class="list-group-item"><li>Logout</li></div></a>
+									</div>
+								</ul>
+							</li>
+						</ul>
+					</ul>
+				{% else %}
+					<ul class="nav navbar-nav pull-right">
+						<li class="dropdown">
+							<ul class="nav navbar-nav pull-right">
+								<li class="dropdown"> 
+									<a href="/movies/login">Sign In</a>
+								</li>
+								<li>
+									<a href="/movies/register/">Sign Up</a>
+								</li>		
+							</ul>
+						</li>
+					</ul>
+				{% endif %}
+			</div>
+		</nav>
+	<div class="container" style="width:50%;margin-top:10%;">
+		<div class="row-fluid well">
+			<form class="form-horizontal" method="post" action="/movies/add/">
+				{% csrf_token %}
+				<fieldset>
+					<div style="background-color : blue; border-radius : 5px">
+						<legend style="color:white; text-shadow: #EEEE00 0 0 10px"><h3 style="text-align : center; padding : 20px 5px 5px 5px;">SEARCH MY PICTURE</h3></legend>
+					</div>
+					<div class="controls form-group">
+						<input type="text" style="text-align:right;" id="username" name="movie" placeholder="Movies" class="form-control input-md input-xlarge">
+						<div id="values" style="border:0px solid black; overflow-y : auto; display :none">
+							<div id="results" style="overflow-y : auto; text-align : right">
+							</div>
+						</div>
+					</div>
+					<div class="controls form-group">
+						<input type="text" style="text-align:right;" id="email" name="year" placeholder="Year" class="form-control input-md input-xlarge">
+					</div>
+					<div class="controls form-group">
+						<input type="text" style="text-align:right;" id="username" name="imdbrating" placeholder="IMDB RATING" class="form-control input-md input-xlarge">
+					</div>
+					<div class="controls form-group">
+						<input type="text" style="text-align:right;" id="username" name="imdbvotes" placeholder="IMDB VOTES" class="form-control input-md input-xlarge">
+					</div>
+					<div class="controls form-group">
+						<input type="text" style="text-align:right;" id="username" name="genre" placeholder="Genre" class="form-control input-md input-xlarge">
+					</div>
+					<div class="controls form-group">
+						<input type="text" style="text-align:right;" id="username" name="actor" placeholder="Actor" class="form-control input-md input-xlarge">
+					</div>
+					<div style="text-align:center;"  class="control-group">
+						<div class="controls">
+							<input type="submit" style="width : 40%" value="Search" class="btn btn-primary"></input>
+						</div>
+					</div>
+				</fieldset>
+			</form>
+		</div>
+	</div>
+	</body>
+</html>

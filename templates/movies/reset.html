@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+	<head>		
+		<link href="{% static 'bootstrap.css' %}" rel="stylesheet">
+		<link href="{% static 'form.css' %}"  rel="stylesheet">
+		<style>
+			body {
+				margin-top: 60px;
+			}
+		</style>
+		<script src="{%static 'jquery.js' %}"></script>
+		<script src="{%static 'csrf.js' %}"></script>
+		<script>
+			$(document).ready(function(){
+				$('input[type=checkbox]').each(function(){
+					if ($(this).attr('id') == "yes"){
+						$(this).prop('checked', true);
+					}
+				})
+				function check(x,y,z){
+					if (x == ""){
+						alert ("Current Password can not be EMPTY");
+						return false;
+					}
+					if (y == "" || z == "" || y != z){
+						alert ("Your password and confirmation password do not match.");
+						return false;
+					}
+					else{
+						return true;
+					}
+				}
+				$("#sub1").click(function(){
+					var checked = "";
+					var i = 0;
+					var status = "YES";
+					$('input[type=checkbox]').each(function(){
+						if ($(this).prop('checked') == true)
+							checked = checked+"yes,"
+						else
+							checked = checked+"no,"
+					})
+					checked = checked.substring(0, checked.length - 1);
+					var email = $("#id_email").val();
+					var age = $("#id_age").val();
+					var first = $("#id_first_name").val();
+					var last = $("#id_last_name").val();
+					var occupation = $("#id_occupation").val();
+					var zipcode = $("#id_zipcode").val();
+					if (first == "" || last == "" || email == "" || age == "" || age != "" || occupation == "" || zipcode == ""){
+						if (email == "") {
+							$("#mail").show();
+							status = "NO";
+						}
+						if (first == ""){
+							$("#first").show();
+							status = "NO";
+						}
+						if (last == ""){
+							$("#last").show();
+							status = "NO";
+						}
+						if (age==""){
+							$("#age").html("<b>This Field is Required</b>");
+							$("#age").show();
+							status = "NO";
+						}
+						if (occupation==""){
+							$("#occ").show();
+							status = "NO";
+						}
+						if (zipcode==""){
+							$("#zip").show();
+							status = "NO";
+						}
+						if (age != "") {
+							for (i=0; i<age.length; i++){
+								var c = age.charAt(i).charCodeAt(0);
+								if(c <48 || c >57){
+									$("#age").html("<b>Age Must Be Numerical</b>");
+									$("#age").show();
+									break;
+								}
+							}
+							if (i != age.length) {
+								status = "NO";
+							}
+						}
+						if (status == "NO") return false;
+						else {
+							$.post('/movies/reset/profile/',{ email : email, age :age, first : first, last : last , occupation : occupation, zipcode : zipcode , checked : checked },function(data){
+								if ($.parseJSON(data) == "EMAIL"){
+									$("#mail").html("<b>This E-Mail has already been registered.</b>");
+									$("#mail").css('margin-left','40px');
+									$("#mail").show();
+								}
+								else{
+									alert("CHANGES IN PROFILE SAVED SUCCESSFULLY");
+									window.location.href = 'http://127.0.0.1:8000/movies/profile/{{ user }}/';
+								}
+							})
+						}
+					}
+				})
+				$(".control-label").keyup(function(){
+					$("#mail").hide(); $("#zip").hide(); $("#age").hide(); $("#occ").hide();  $("#first").hide(); $("#last").hide(); 
+				})
+				$("#sub").click(function(){
+					var x = $("#current").val();
+					var y = $("#new").val();
+					var z = $("#renew").val();
+					if (check(x,y,z)==true){
+						$.post('/movies/reset/password/',{ current : x, now : y },function(data){
+							if (data == "1"){
+								alert("Password Successfully Changed");
+								window.location.href = 'http://127.0.0.1:8000/movies/profile/{{ user }}/';
+							}
+							else{
+								$("#current").val('');
+								$("#new").val('');
+								$("#renew").val('');
+								alert("Current Password is INVALID, try again")
+							}	
+						});
+					}
+				})
+				$("#can").click(function(){
+					window.location.href = 'http://127.0.0.1:8000/movies/profile/{{ user }}/';
+				})
+			})
+		</script>
+	</head>
+	<body>
+		<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+			<div class="container">
+					<ul class="nav navbar-nav pull-left">
+						<li class="dropdown">
+							<ul class="nav navbar-nav pull-right">
+								<li class="dropdown"> 
+									<a  href="/movies/">HOME PAGE</a>
+								</li>
+								<li>
+									<a href="/movies/add/">ADVANCED SEARCH</a>
+								</li>
+								<li>
+									<a href="/movies/view/top100/">DIRECTOR's CUT TOP 100</a>
+								</li>
+								<li>
+									<a href="/movies/view/bottom100/">DIRECTOR's CUT BOTTOM 100</a>
+								</li>	
+							</ul>
+						</li>
+					</ul>
+			</div>
+		</nav>
+			{% if reset == "password" %}
+				<h1 class="text-center" style="color : white">RESET YOUR PASSWORD HERE</h1>
+				<div style="width : 500px; margin-left : 400px" id="big-form" class="well auth-box">
+					<fieldset>
+						<legend>SELECT NEW PASSWORD</legend>
+						<div class="form-group">
+							<label class="control-label" for="textinput"> 
+								Current Password: <input id="current" style="margin-left: 41px " type="password" name="c1" /><br>
+								New Password: <input id="new" style="margin-left: 67px " type="password" name="p1"/><br>
+								Retype New Password: &nbsp;<input id="renew" type="password" name="p2"/><br>
+							</label>
+						</div>
+						<table>
+							<tr>
+								<td>
+									<input class="btn btn-primary" id="sub" style="margin-left : 60px; width: 70%; height: 32px; font-size: 13px;" type="submit" value="Save Changes"/>
+								</td>
+								<td>
+									<input class="btn btn-primary" id="can" style="margin-left : 100px; width: 70%; height: 32px; font-size: 13px;" type="submit" value="Cancel" />
+								</td>
+							</tr>
+						</table>
+					</fieldset>
+				</div>
+			{% else %}
+				<h1 class="text-center" style="color : white">EDIT YOUR PROFILE</h1>
+				<div style="width : 450px; margin-left : 428px" id="big-form" class="well auth-box">
+					<div class="form-group">
+							<label class="control-label" for="textinput"> 
+								First Name: <input required id="id_first_name" style="margin-left: 41px" type="text" value="{{ user.first_name }}"/><br>
+								<li id="first" style="color : red; margin-left : 160px" hidden><b>This Field is Required</b></li>
+								Last Name: <input required id="id_last_name" style="margin-top : 5px; margin-left: 45px" type="text" value="{{ user.last_name }}" /><br>
+								<li id="last" style="color : red; margin-left : 160px" hidden><b>This Field is Required</b></li>
+								Age: <input required id="id_age" style="margin-top : 5px; margin-left: 98px" type="text" value="{{ profile.age }}"/><br>
+								<li id="age" style="color : red; margin-left : 160px" hidden></li>	
+								Occupation: <input required id="id_occupation" style="margin-top : 5px; margin-left : 40px" type="text" value="{{ profile.occupation }}" /><br>
+								<li id="occ" style="color : red; margin-left : 160px" hidden><b>This Field is Required</b></li>
+								Zipcode: <input required id="id_zipcode" style="margin-top : 5px; margin-left : 66px" type="text" value="{{ profile.zipcode }}"/><br>
+								<li id="zip" style="color : red; margin-left : 160px" hidden><b>This Field is Required</b></li>
+								E-Mail ID: <input required id="id_email" style="margin-top : 5px; margin-left : 58px" type="email" value="{{ user.email }}" /><br>
+								<li id="mail" style="color : red; margin-left : 160px" hidden><b>This Field is Required</b></li><br>		
+								CHOOSE YOUR FAVORITE GENRES : <br>
+								<table>
+									<tr>
+										<td><input id="{{ interest.0 }}" type="checkbox" name="Comedy">Comedy</input></td>
+										<td><input id="{{ interest.1 }}" style="margin-left : 40px" name="Drama" type="checkbox">Drama</input></td>
+										<td><input id="{{ interest.2 }}" style="margin-left : 40px" name="Fantasy" type="checkbox">Fantasy</input></td>
+									</tr>
+									<tr>
+										<td><input id="{{ interest.3 }}" type="checkbox" name="Horror">Horror</input></td>
+										<td><input id="{{ interest.4 }}" style="margin-left : 40px" name="Biography" type="checkbox">Biography</input></td>
+										<td><input id="{{ interest.5 }}" style="margin-left : 40px" name="Thriller" type="checkbox">Thriller</input></td>
+									</tr>
+									<tr>
+										<td><input id="{{ interest.6 }}" type="checkbox" name="Crime">Crime</input></td>
+										<td><input id="{{ interest.7 }}" style="margin-left : 40px" name="Western" type="checkbox">Western</input></td>
+										<td><input id="{{ interest.8 }}" style="margin-left : 40px" name="Musical" type="checkbox">Musical</input></td>
+									</tr>
+									<tr>
+										<td><input id="{{ interest.9 }}" type="checkbox" name="War">War</input></td>
+										<td><input id="{{ interest.10 }}" style="margin-left : 40px" name="Sci-Fi" type="checkbox">Sci-Fi</input></td>
+										<td><input id="{{ interest.11 }}" style="margin-left : 40px" name="Action" type="checkbox">Action</input></td>
+									</tr>
+									<tr>
+										<td><input id="{{ interest.12 }}" type="checkbox" name="Documentary">Documentary</input></td>
+										<td><input id="{{ interest.13 }}" style="margin-left : 40px" name="Romance" type="checkbox">Romance</input></td>
+										<td><input id="{{ interest.14 }}" style="margin-left : 40px" name="Animation" type="checkbox">Animation</input></td>
+									</tr>
+									<tr>
+										<td><input id="{{ interest.15 }}" type="checkbox" name="Mystery">Mystery</input></td>
+										<td><input id="{{ interest.16 }}" style="margin-left : 40px" name="Family" type="checkbox">Family</input></td>
+										<td><input id="{{ interest.17 }}" style="margin-left : 40px" name="Adventure" type="checkbox">Adventure</input></td>
+									</tr>
+								</table>
+							</label>
+						</div>
+						<table>
+							<tr>
+								<td>
+									<input class="btn btn-primary" id="sub1" style="margin-left : 45px; width: 70%; height: 32px; font-size: 13px;" type="submit" value="Save Changes"/>
+								</td>
+								<td>
+									<input class="btn btn-primary" id="can" style="margin-left : 85px; width: 70%; height: 32px; font-size: 13px;" type="submit" value="Cancel" />
+								</td>
+							</tr>
+						</table>
+				</div>
+			{% endif %}
+	</body>
+</html>

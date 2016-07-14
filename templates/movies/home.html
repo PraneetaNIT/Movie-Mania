@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+{% load static %}	
+	<head>
+		<title>
+			QUERY RESULT
+		</title>
+		<link href="{% static 'bootstrap.css' %}" rel="stylesheet">
+		<link href="{% static 'drag.css' %}"  rel="stylesheet">
+		<link href="{% static 'form.css' %}"  rel="stylesheet">
+		<style>
+			body {
+				margin-top: 60px;
+			}
+			#abhi{
+				margin-left: 10px;
+				float:left
+			}
+		</style>	
+	</head>
+	<body>
+		<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+			<div class="container">
+					<ul class="nav navbar-nav pull-left">
+						<li class="dropdown" style="margin-left : -50px">
+							<ul class="nav navbar-nav pull-left">
+								<li class="dropdown"> 
+									<a href="/movies/">HOME PAGE</a>
+								</li>
+								<li>
+									<a href="/movies/add/">ADVANCED SEARCH</a>
+								</li>	
+								<li>
+									<a href="/movies/view/top100/">DIRECTOR's CUT TOP 100</a>
+								</li>
+								<li>
+									<a href="/movies/view/bottom100/">DIRECTOR's CUT BOTTOM 100</a>
+								</li>
+							</ul>
+						</li>
+					</ul>
+				{% if user.is_authenticated %}
+					<ul class="nav navbar-nav pull-left" style="margin-left : 32px">
+						<li class="dropdown">
+							<img src = "/home/vijender/workspace/DBMS/media/{{ profile.picture }}" width="60" height="60" />
+						</li>
+						<li style="margin-left : 10px">
+							<a href="/movies/profile/{{ user.username }}">VIEW PROFILE</a>
+						</li>
+						<li style="margin-left : -10px">
+							<a href="/movies/latest_updates/">VIEW UPDATES</a>
+						</li>
+						<ul class="nav navbar-nav pull-left" id = "menu">
+							<li style="padding : 0px 10px 30px 5px" class="dropdown">OPTIONS <b class="caret"></b>
+								<ul class = "sub-menu">
+									<div class="list-group" style="background-color : white; overflow-y : auto; width : 200px; position : absolute; top : 38px; left : -110px">
+										<a href="/movies/reset/password"><div class="list-group-item"><li>Change Password</li></div></a>
+										<a href="/movies/reset/profile"><div class="list-group-item"><li>Update Profile</li></div></a>
+										<a href="/movies/logout/"><div class="list-group-item"><li>Logout</li></div></a>
+									</div>
+								</ul>
+							</li>
+						</ul>
+					</ul>
+				{% else %}
+					<ul class="nav navbar-nav pull-right">
+						<li class="dropdown">
+							<ul class="nav navbar-nav pull-right">
+								<li class="dropdown"> 
+									<a href="/movies/login">Sign In</a>
+								</li>
+								<li>
+									<a href="/movies/register/">Sign Up</a>
+								</li>		
+							</ul>
+						</li>
+					</ul>
+				{% endif %}
+			</div>
+		</nav>
+		<h2 style="text-shadow: #EEEE00 0 0 10px; margin-top : 70px">Movies recommended for You</h2><br>
+		{%  for ver in ver %}
+			<div id="abhi" style="margin-top : 5px; width : 1020">
+				<a href="/movies/{{ver.10}}"><img src = "/home/vijender/workspace/DBMS/media/{{ ver.9 }}" width="200" height="200" /></a>
+			</div>
+		{% endfor %}<br><br> 
+	</body>
+</html>

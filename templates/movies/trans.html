@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html>
+{% load static %}	
+	<head>
+		<title>
+			TRANSACTIONS
+		</title>
+		<link href="{% static 'bootstrap.css' %}" rel="stylesheet">
+		<link href="{% static 'form.css' %}"  rel="stylesheet">
+		<link href="{% static 'drag.css' %}"  rel="stylesheet">
+		<script src="{%static 'jquery.js' %}"></script>
+		<script>
+			var index = -1;
+			$(document).ready(function(){
+				$("#username").keyup(function(e){
+					var query = $(this).val();
+					$("#head").hide();
+					if(query.length > 0){
+						$("#values").show();
+						$.get('/movies/suggestion/',{ suggestion : query },function(data){
+							var s = data.split("\n");
+							$('#results').empty();
+							for (i=0; i<s.length-1; i++){
+								$('#results').append($("<div class='capitals'><p class='country' style='font-size : auto'><b>"+s[i]+"</b></p></div>"));
+							}
+							if(e.which == 38){
+							  index--;
+								if(index < 0){
+									index = 0;
+								}
+								change_selection();
+							}
+							else if(e.which == 40){
+								index++;
+								if(index > $('#results').find('.capitals').length - 1){
+									index = $('#results').find('.capitals').length-1;
+								}
+								change_selection();
+							}
+							else if(e.which == 27){		// esc
+								index = -1;
+								$options.removeClass('selected');
+								$("#values").hide();
+							}
+							else if(e.which == 13){   // enter
+								$("#table").empty();
+								$("#username").val('');
+								$("#head").show();
+								$('#results').empty();
+								$("#values").hide();
+								$.get('/movies/get/',{search : query},function(data){
+									$.each($.parseJSON(data), function(idx,obj){
+										$("#table").show();
+										var href = "<a href=/movies/sell/"+obj.transid+">BUY</a>";
+										var s =	"<tr><th><b>"+obj.title+'('+obj.year+')'+"</b></th><th><b>"+obj.seller+"</b></th><th><b>"+obj.price+"</b></th><th><b>"+href+"</b></th></tr>";
+										$('#table').append($(s));
+									})
+								})
+								if(index > -1){
+									if($('#results').find('.capitals').hasClass('selected')){
+										$('#results').find('.selected').click();
+										index=-1;
+										$('#results').find('.capitals').removeClass('selected');
+									}
+								}
+							}
+						})
+					}
+					else{
+						$('#results').empty();
+						$("#values").hide();
+						$('#head').show();
+					}
+				})
+				$("#results").delegate('.capitals','mouseenter', function() {
+					var a = $(this).find("p.country").text();
+					$("#username").val(a);
+				});
+				function change_selection(){
+					$('#results').find('.capitals').removeClass('selected');
+					$('#results').find('.capitals').eq(index).addClass('selected');
+				}
+			})
+		</script>
+		<style>
+			body {
+				margin-top: 60px;
+			}
+			#abhi{
+				margin-left: 10px;
+				float:left
+			}
+			p{
+				text-indent:20px;
+				margin-bottom:2px;
+			}
+			.country{
+				margin-top:0px;
+				font-size:12px;
+				height:30px;
+				border:1px solid grey;
+			}
+			.selected{
+				background:blue;
+			}
+		</style>	
+	</head>
+	<body>
+		<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+			{% csrf_token %}
+			<div class="container">
+					<ul class="nav navbar-nav pull-left">
+						<li class="dropdown" style="margin-left : -50px">
+							<ul class="nav navbar-nav pull-left">
+								<li class="dropdown"> 
+									<a href="/movies/">HOME PAGE</a>
+								</li>
+								<li>
+									<a href="/movies/add/">ADVANCED SEARCH</a>
+								</li>	
+								<li>
+									<a href="/movies/view/top100/">DIRECTOR's CUT TOP 100</a>
+								</li>
+								<li>
+									<a href="/movies/view/bottom100/">DIRECTOR's CUT BOTTOM 100</a>
+								</li>
+							</ul>
+						</li>
+					</ul>
+				{% if user.is_authenticated %}
+					<ul class="nav navbar-nav pull-left" style="margin-left : 32px">
+						<li class="dropdown">
+							<img src = "/home/vijender/workspace/DBMS/media/{{ profile.picture }}" width="60" height="60" />
+						</li>
+						<li style="margin-left : 10px">
+							<a href="/movies/profile/{{ user.username }}">VIEW PROFILE</a>
+						</li>
+						<li style="margin-left : -10px">
+							<a href="/movies/latest_updates/">VIEW UPDATES</a>
+						</li>
+						<ul class="nav navbar-nav pull-left" id = "menu">
+							<li style="padding : 0px 10px 30px 5px" class="dropdown">OPTIONS <b class="caret"></b>
+								<ul class = "sub-menu">
+									<div class="list-group" style="background-color : white; overflow-y : auto; width : 200px; position : absolute; top : 38px; left : -110px">
+										<a href="/movies/reset/password"><div class="list-group-item"><li>Change Password</li></div></a>
+										<a href="/movies/reset/profile"><div class="list-group-item"><li>Update Profile</li></div></a>
+										<a href="/movies/logout/"><div class="list-group-item"><li>Logout</li></div></a>
+									</div>
+								</ul>
+							</li>
+						</ul>
+					</ul>
+				{% else %}
+					<ul class="nav navbar-nav pull-right">
+						<li class="dropdown">
+							<ul class="nav navbar-nav pull-right">
+								<li class="dropdown"> 
+									<a href="/movies/login">Sign In</a>
+								</li>
+								<li>
+									<a href="/movies/register/">Sign Up</a>
+								</li>		
+							</ul>
+						</li>
+					</ul>
+				{% endif %}
+			</div>
+		</nav>
+		<div style="width:1100px;margin-top:100px;margin-left:100px">
+			<div style="width:500px;float:left">
+				<h3>MY MOVIE CDs</h3>
+				<table width="500px" border="1" >
+					<td><b>Movie Title</b></td>
+					<td><b>Price</b></td>
+					<td><b>Is Sold</b></td>
+					<td><b>Buyer</b></td>
+					{% for movies in movie %}
+					<tr>
+						<th>
+							<b> 
+								{{ movies.0 }}({{movies.1}}) 
+							</b> 
+						</th> 
+						<th> 
+							<b>
+								{{ movies.2 }} 
+							</b>
+						</th>
+						<th>
+							<b> 
+								{% if movies.3 == 0 %}
+									Not Sold
+								{% else %} 
+									Sold
+								{% endif %}
+							</b> 
+						</th>
+						<th>
+							<b> 
+								{% if movies.4 == -1 %}
+									N/A
+								{% else %}
+									{{ movies.4 }}
+								{% endif %}
+							</b> 
+						</th>
+					</tr>
+					{% endfor%}
+				</table>
+			</div>
+			<div style="width:600px;float:left">
+					<input id="username" type="text" style="margin-left:100px;width : 400px" name="movies" placeholder="Enter Movie" class="form-control input-md input-xlarge" />
+					<div id="values" style="border:0px solid black; overflow-y : auto; display :none">
+						<div id="results" style="overflow-y : auto; text-align : left; width : 400px; margin-left : 100px; ">
+						</div>
+					</div>
+				<h3 id="head" style="margin-left : 100px; margin-top : 30px">SEARCH MOVIES TO BUY</h3>
+				<table hidden id="table" style="margin-left : 100px" width="500px" border="1" >
+				</table>
+			</div>
+		</div>
+		<h2 style="margin-left : 200px; clear : both">My Collection</h2>
+		<table style="margin-left : 100px" width="500px" border="1" >
+					<td><b>Movie Title</b></td>
+					<td><b>Price</b></td>
+					<td><b>Seller</b></td>
+					{% for movies in collection %}
+					<tr>
+						<th>
+							<b> 
+								{{ movies.0 }}({{movies.1}}) 
+							</b> 
+						</th> 
+						<th> 
+							<b>
+								{{ movies.2 }} 
+							</b>
+						</th>
+						<th>
+							<b> 
+								{{ movies.3 }}
+							</b> 
+						</th>
+					</tr>
+					{% endfor%}
+				</table>
+	</body>
+</html>

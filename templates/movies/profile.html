@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html>
+{% load static %}	
+	<head>
+		<title>PROFILE</title>
+		<link href="{% static 'bootstrap.css' %}" rel="stylesheet">
+		<link href="{% static 'form.css' %}"  rel="stylesheet">
+		<link href="{% static 'drag.css' %}"  rel="stylesheet">
+		<link href="{% static 'table.css' %}"  rel="stylesheet">
+		<script src="{%static 'jquery.js' %}"></script>	
+		<script>
+			$(document).ready(function(){
+				var b = -1; var s; var len; var status;
+				$("#image").mouseenter(function(){
+					$("#text").show();
+					$("#text3").show();
+				}).mouseleave(function(){
+					$("#text").hide();
+					$("#text3").hide();				
+				})	
+				$("#text").click(function(){
+					var s = "http://127.0.0.1:8000/movies/changed/";
+					popupWindow = window.open(s,'name','width=400,height=250,screenX=150,screenY=250'); 
+				})
+				$("#text2").click(function(){
+					var s = "http://127.0.0.1:8000/movies/changed/";
+					popupWindow = window.open(s,'name','width=400,height=250,screenX=150,screenY=250'); 
+				})
+				$("#text3").click(function(){
+					var r = confirm("Are you sure you want to remove your profile photo?");
+					if (r == true){
+						$.get('/movies/remove_picture/',function(data){
+							location.reload();
+						})
+					}
+				})
+				var index = -1;
+				$("#person").keyup(function(e){
+					e.preventDefault();
+					var query = $(this).val();
+					if(query.length > 0){
+						$("#values").show();
+						$.get('/movies/user/',{ suggestion : query, res : "NO" },function(data){
+							b = -1;
+							s = data.split("\n");
+							$('#results').empty();
+							for (i=0; i<s.length-1; i++){
+								var t = s[i].split("    ");
+								var m = '/home/vijender/workspace/DBMS/media/'+t[1];
+								$('#results').append($("<tr class='capitals'><td><img src="+m+" height = 37px; width = 35px/></td><td><b><p class='country' style='margin-right : -500px; font-size : 16px'>"+t[2]+"</p></b></td></tr>"));
+							}
+							if(e.which == 38){
+							  index--;
+								if(index < 0){
+									index = 0;
+								}
+								change_selection();
+							}
+							else if(e.which == 40){
+								index++;
+								if(index > $('#results').find('.capitals').length - 1){
+									index = $('#results').find('.capitals').length-1;
+								}
+								change_selection();
+							}
+							else if(e.which == 27){		// esc
+								index = -1;
+								$options.removeClass('selected');
+								$("#values").hide();
+							}
+							else if(e.which == 13){   // enter
+								if(index > -1){
+									if($('#results').find('.capitals').hasClass('selected')){
+										$('#results').find('.selected').click();
+										index=-1;
+										$('#results').find('.capitals').removeClass('selected');
+									}
+								}
+							}
+						})
+					}
+					else{
+						$('#results').empty();
+						$("#values").hide();
+					}
+				})
+				$("#results").delegate('.capitals','mouseenter', function() {
+					var a = $(this).find("p.country").text();
+					b = $(this).index();
+					$("#person").val(a);
+				})
+				function change_selection(){
+					$('#results').find('.capitals').removeClass('selected');
+					$('#results').find('.capitals').eq(index).addClass('selected');
+				}
+				$("#submit").click(function(e){
+					var query = $("#person").val();
+					if (query != ""){
+						if (b == -1){
+							e.preventDefault();
+							$.get('/movies/user/',{ suggestion : query , res : "YES" },function(data){
+								if (data == "NONE"){
+									alert("NO RESULTS FOUND FOR YOUR QUERY, CHECK YOUR SPELLING AND TRY AGAIN");
+								}
+								else{
+									window.location.href = 'http://127.0.0.1:8000/movies/profile/'+data;
+								}
+							})
+						}
+						else {
+							var t = s[b].split("    ");
+							$("#find").attr("action","/movies/profile/"+t[0]+"/");
+						}
+					}
+				})
+				$("#message").click(function(){
+					$("#address").val("{{ user.first_name }} {{ user.last_name }}");
+					$("#popup").css('display','block');
+				})
+				$("#messages").click(function(){
+					$.get('/movies/view_all_message/',{},function(data){
+					})
+					$(".white_content").css('display','block');
+				})
+				$("#cancel").click(function(){
+					$("#comment").val('');
+					$("#popup").css('display','none');
+				})
+				$("#send").click(function(){
+					var message = $("#comment").val();
+					var reciever = "{{ user.id }}";
+					$.get('/movies/message/',{ message : message , reciever : reciever },function(data){
+						alert(data);
+						$("#comment").val('');
+						$("#popup").css('display','none');
+					})
+				})
+				$("#follow").click(function(){
+					var s = "{{ user.username }}"
+					var t = $("#follow").val();
+					if (t == "Following"){
+						$.get('/movies/unfollow/',{ unfollow : s },function(data){
+							$("#follow").val('Follow '+s);
+							$("#follow").css('background-color','#4479BA');
+							var s = {{ follower }} 
+							if (status == "YES"){
+								$("#followpara").html('<a href="/movies/{{ user.username }}/follower/"><b>Follower('+s+')</b></a>');
+							}
+							else{
+								status = "NO";
+								$("#followpara").html('<a href="/movies/{{ user.username }}/follower/"><b>Follower('+(s-1)+')</b></a>');
+							}
+							$("#follow").val('Follow {{ user.username }}');
+							$("#{{ login }}").remove();
+						})
+					}
+					else{
+						$.get('/movies/follow/',{ follow : s },function(data){
+							$("#follow").val('Following');
+							$("#follow").css('background-color','#C6C6FF');
+							var s = {{ follower }}
+							if (status == "NO"){
+								$("#followpara").html('<a href="/movies/{{ user.username }}/follower/"><b>Follower('+(s)+')</b></a>');
+							}
+							else{
+								status = "YES";
+								$("#followpara").html('<a href="/movies/{{ user.username }}/follower/"><b>Follower('+(s+1)+')</b></a>');
+							}
+							var img = $('<img id="dynamic">'); //Equivalent: $(document.createElement('img'))
+							img.attr('src', '/home/vijender/workspace/DBMS/media/{{ pic }}');
+							img.attr('height','30');
+							img.attr('width','50');
+							img.appendTo('#follower');
+							$("#dynamic").wrap($('<a>',{ href: '/movies/profile/{{ login }}/', id : '{{ login }}'  }));	
+						})
+					}
+				})
+			})		
+		</script>
+		<style>
+			body {
+				margin-top: 60px;
+			}
+			#abhi{
+				margin-left: 10px;
+				float:left
+			}
+			#image{
+				position : absolute;
+				top : 0;
+				left : 0;			
+			}
+			#text{
+				border-style:solid;
+				border-width : medium;
+				background-color : #3366ff; 			
+				border-color:black;				
+				z-index : 100px;
+				position : absolute;
+				color : white;
+				font-size : 19.4px;
+				font-weight : bold;
+				left : 114px;
+				top : 447px;		
+			}
+			.white_content {
+				display: none;
+				position: absolute;
+				top: 66px;
+				left: 750px;
+				width: 500px;
+				border: 3px solid #5A7DB2;
+				background-color: #ecf0f1;
+				z-index:1002;
+				overflow: auto;
+			}
+			#popup{
+				display: none;
+				position: absolute;
+				top: 300px;
+				left: 200px;
+				width: 600px;
+				border: 2px solid #5A7DB2;
+				background-color: #ecf0f1;
+				z-index: 10002;
+				height : 220px;
+			}
+			#text2{
+				border-style:solid;
+				border-width : medium;
+				background-color : #3366FF; 			
+				border-color: black;				
+				z-index : 100px;
+				width : 290px;
+				padding : 0px 0.5cm;
+				position : absolute;
+				color : white;
+				font-size : 19.4px;
+				font-weight : bold;
+				left : 114px;
+				top : 447px;		
+			}
+			#text3{
+				border-style:solid;
+				border-width : medium;
+				background-color : #3366FF; 			
+				border-color: black;				
+				z-index : 100px;
+				width : 40px;
+				padding : 0px 0.3cm;
+				position : absolute;
+				color : white;
+				font-size : 15.4px;
+				font-weight : bold;
+				left : 364px;
+				top : 160px;		
+			}
+			#text1{			
+				z-index : 100px;
+				position : absolute;
+				color : white;
+				font-size : 12.3px;
+				font-weight : bold;
+				left : 49px;
+				top : 440px;	
+			}
+			.capitals{
+				margin-top:0px;
+				height:30px;
+				border:1px solid grey;
+			}
+			.selected{
+				background:blue;
+			}
+			.button-link {
+				font-family: Verdana;
+				font-size: 15px; 
+				padding: 10px 15px;
+				background: #4479BA;
+				color: #FFF;
+				-webkit-border-radius: 4px;
+				-moz-border-radius: 4px;
+				border-radius: 4px;
+				border: solid 1px #20538D;
+				text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+				-webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+				-moz-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+				box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+				-webkit-transition-duration: 0.2s;
+				-moz-transition-duration: 0.2s;
+				transition-duration: 0.2s;
+			}
+			.button-link:hover, .button-link:focus {
+				background: #356094;
+				border: solid 1px #2A4E77;
+				text-decoration: none;
+			}
+			.form-wrapper {
+				width: 670px;
+				padding: 8px;
+				margin-left : 50px;
+				margin-top : 10px;
+				overflow: hidden;
+				border-width: 1px;
+				border-style: solid;
+				border-color: #dedede #bababa #aaa #bababa;
+				box-shadow: 0 3px 3px rgba(255,255,255,.1), 0 3px 0 #bbb, 0 4px 0 #aaa, 0 5px 5px #444;
+				border-radius: 10px;    
+				background-color: #f6f6f6;
+				background-image: linear-gradient(top, #f6f6f6, #eae8e8);
+			}
+			.form-wrapper #person {
+				width: 530px;
+				height: 42px;
+				padding: 10px 5px;
+				float: left;    
+				font: bold 16px 'lucida sans', 'trebuchet MS', 'Tahoma';
+				border: 1px solid #ccc;
+				box-shadow: 0 1px 1px #ddd inset, 0 1px 0 #fff;
+				border-radius: 3px;      
+			}
+			.form-wrapper #person:focus {
+				outline: 0;
+				border-color: #aaa;
+				box-shadow: 0 1px 1px #bbb inset;  
+			}
+			.form-wrapper #person::-webkit-input-placeholder {
+				color: #999;
+				font-weight: normal;
+			}
+			.form-wrapper #person:-moz-placeholder {
+				color: #999;
+				font-weight: normal;
+			}
+			.form-wrapper #person:-ms-input-placeholder {
+				color: #999;
+				font-weight: normal;
+			} 
+			.form-wrapper #submit {
+				float: right;    
+				border: 1px solid #00748f;
+				height: 42px;
+				width: 100px;
+				padding: 0;
+				cursor: pointer;
+				font: bold 15px Arial, Helvetica;
+				color: #fafafa;
+				text-transform: uppercase;    
+				background-color: #0483a0;
+				background-image: linear-gradient(top, #31b2c3, #0483a0);
+				-moz-border-radius: 3px;
+				-webkit-border-radius: 3px;
+				border-radius: 3px;      
+				text-shadow: 0 1px 0 rgba(0, 0 ,0, .3);
+				box-shadow: 0 1px 0 rgba(255, 255, 255, 0.3) inset, 0 1px 0 #fff;
+			}
+			.form-wrapper #submit:hover, .form-wrapper #submit:focus {       
+				background-color: #31b2c3;
+				background-image: linear-gradient(top, #0483a0, #31b2c3);
+			}   
+			.form-wrapper #submit:active {
+				outline: 0;    
+				box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5) inset;    
+			}
+			.form-wrapper #submit::-moz-focus-inner {
+				border: 0;
+			}
+		</style>	
+	</head>
+	<body>
+		<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+			{% csrf_token %}
+			<div class="container">
+				<ul class="nav navbar-nav pull-left">
+					<li class="dropdown">
+						<ul class="nav navbar-nav pull-right">
+							<li class="dropdown"> 
+								<a href="/movies/">HOME PAGE</a>
+							</li>
+							<li>
+								<a href="/movies/add/">ADVANCED SEARCH</a>
+							</li>
+						</ul>
+					</li>
+				</ul>
+				{% if user.is_authenticated %}
+					<ul class="nav navbar-nav pull-left" style="margin-left : 300px">
+						<li>
+							<ul class="nav navbar-nav pull-right">
+								<a href="/movies/profile/{{ login }}/"><img src = "/home/vijender/workspace/DBMS/media/{{ pic }}" width="60" height="60" /></a>
+							</ul>
+						</li>
+						<li style="margin-left : 10px">
+							<a href="/movies/transaction/">BUY OR SELL</a>
+						</li>
+						<li  style="margin-left : 10px">
+							<a href="/movies/latest_updates">VIEW UPDATES</a>
+						</li>
+						<li>
+							<ul class="nav navbar-nav pull-right">
+								<a id="messages" href="#"><img style="margin-left : 15px; margin-top : 15px" src="/home/vijender/workspace/DBMS/media/msg.jpg" width="30px" height="30px" /></a>
+							</ul>
+						</li>
+						<ul class="nav navbar-nav pull-left"  style="margin-left : 10px" id = "menu">
+							<li style="padding : 0px 10px 30px 5px" class="dropdown">OPTIONS <b class="caret"></b>
+								<ul class = "sub-menu">
+									<div class="list-group" style="background-color : white; overflow-y : auto; width : 200px; position : absolute; top : 38px; left : -110px">
+										<a href="/movies/reset/password"><div class="list-group-item"><li>Change Password</li></div></a>
+										<a href="/movies/reset/profile"><div class="list-group-item"><li>Update Profile</li></div></a>
+										<a href="/movies/logout/"><div class="list-group-item"><li>Logout</li></div></a>
+									</div>
+								</ul>
+							</li>
+						</ul>
+					</ul>	
+				{% endif %}
+			</div>
+		</nav>
+		<div style="width : 1100px">
+			<table>
+				<tr>
+					<td>
+						<form id="find" class="form-wrapper" action="">
+							<input type="text" id="person" placeholder="Search Persons" required>
+							<input type="submit" id="submit" value="go">
+						</form>
+						<div id="values" style="position : absolute; z-index : 30; margin-left : 50px; width : 540px; border:0px solid black; overflow-y : auto; display :none">
+							<div id="results" style="background-color : white; overflow-y : auto; text-align : right">
+								<table id="sir"></table>
+							</div>
+						</div>
+					</td>
+					{% if same == False %}
+						<td>
+							<input class="button-link" style="width : 130px; position : relative; margin-left : 60px; margin-top : 16px" type="submit" id="message" value="Message" />
+						</td>
+						<td>
+						{% if follow == False %}
+							<input class="button-link" style="width : 170px; position : relative; margin-left : 60px; margin-top : 16px" type="submit" id="follow" value="Follow {{ user.first_name }}" />
+						{% else %}
+							<input class="button-link" style="width : 170px; background-color : #C6C6FF; position : relative; margin-left : 60px; margin-top : 16px" type="submit" id="follow" value="Following" />
+						{% endif %}
+						</td>
+					{% endif %}
+				</tr>
+			</table>
+		</div>
+		<div style="width : 1200px">
+			<div style="float:left; width:450px">
+				<div>
+					<img id="image" style = "margin-top : 30px; margin-left : 50px; position : relative" src = "/home/vijender/workspace/DBMS/media/{{ profile.picture }}" width="353" height="320" /><br>
+					<b style = "font-family: Verdana; color: blue; line-height: 1.5; letter-spacing: .25px;font-size : 25px; margin-left : 46px;"><a href="/movies/profile/{{ user.username }}">{{ user.first_name }} &nbsp; {{ user.last_name }}</a></b>
+					{% if same == True %}
+						{% if image == True %}
+							<p id="text2">ADD PROFILE PICTURE</p>
+							<img id="text1" src = "/home/vijender/workspace/DBMS/media/cam.png" width="65" height="43" />
+						{% else %}
+							<p hidden id="text3">X</p>
+							<p hidden id="text">UPDATE PROFILE PICTURE</p>
+							<img id="text1" src = "/home/vijender/workspace/DBMS/media/cam.png" width="65" height="43" />
+						{% endif %}	
+					{% endif %}
+				</div>
+				<div style="clear : both; margin-left : 50px; background-color : #b0c4de; width : 450px" id="follower">
+					<p id="followpara"><a href="/movies/{{ user.username }}/follower/"><b>Follower({{ follower }})</b></a></p>
+					{% for pro in profiles %}
+						<a id="{{ pro.1 }}" href="/movies/profile/{{ pro.1 }}/"><img src = "/home/vijender/workspace/movies/media/{{ pro.0.picture }}" width="46" height="30" /></a>			
+					{% endfor %}
+				</div><br>
+				<div style="margin-left : 50px; background-color : #b0c4de; width : 450px">
+					<p><a href="/movies/{{ user.username }}/following/"><b>Following({{ following }})</b></a></p>
+					{% for pro in profiles1 %}
+						<a id="{{ pro.1 }}" href="/movies/profile/{{ pro.1 }}/"><img src = "/home/vijender/workspace/movies/media/{{ pro.0.picture }}" width="46" height="30" /></a>
+					{% endfor %}
+				</div><br>
+				<div>
+					<table style="margin-left : 50px; width : 450px" class="bordered">
+						<b>
+							<tr>
+								<th>USERNAME</th>
+								<th>{{ user.username }}</th>
+							</tr>
+							<tr>
+								<th>E-MAIL ID</th>
+								<th>{{ user.email }}</th>
+							</tr>
+							<tr>
+								<th>SEX</th>
+								<th>{%  if profile.sex == 'male' %} MALE {% else %} FEMALE {% endif %}</th>
+							</tr>
+							<tr>
+								<th>AGE</th>
+								<th>{{ profile.age }}</th>
+							</tr>
+							<tr>
+								<th>OCCUPATION</th>
+								<th>{{ profile.occupation }}</th>
+							</tr>
+							<tr>
+								<th>ZIPCODE</th>
+								<th>{{ profile.zipcode }}</th>
+							</tr>
+						</b>
+					</table>
+				</div>
+			</div>
+			<div style="float: left; width: 730px; position : absolute; top : 160px; margin-left : 520px">
+				<div id="header" style="background-color: #7E79AC ;">
+					<b><span style = "font-size : 20px">MOVIES RATED BY {{ user.first_name }}</span></b>
+				</div>
+				{% for act in movie %}
+				<div style="background-color:#FFD700; height:104px; width:180px; float:left;">
+					<a href="/movies/{{ act.10 }}"><img src = "/home/vijender/workspace/DBMS/media/{{ act.9 }}" width="100" height="100" /></a> 
+				</div>
+				<div id="menu" style="background-color:#FFD700;  height:104px; width:330px; float:left;">
+					<a href="/movies/{{ act.10 }}"><b>{{ act.0 }}({{ act.1 }}) </b></a> 
+				</div>
+				<div id="menu" style="background-color:#FFD700;height:104px; width:120px; float:left;">
+					<b>{% if act.7 < 0 %} N/A {% else %} {{ act.7 }} {% endif %}</b>
+				</div> 
+				<div id="menu" style="background-color:#FFD700;height:104px; width:100px; float:left;">
+					<b>{{ act.13 }}</b>
+				</div> 
+				{% endfor %}
+			</div>
+		</div>
+		<div class="white_content" id="lighten">
+			<div style="background-color : white"><b style="margin-left : 20px">Inbox (0)</b></div>
+			<div class="list-group-item">
+				<b>MOVIES RATED BY {{ user.first_name }}</b>
+			</div>
+			<div class="list-group-item">
+				<b>MOVIES RATED BY {{ user.first_name }}</b>
+			</div>
+			<a href="javascript:void(0)" style="margin-left : 20px" onclick="document.getElementById('lighten').style.display='none'"><b>Close Window</b></a>
+		</div>
+		<div id="popup">
+			<div style="background-color : #7A7CEB; color : white"><b style="margin-left : 20px; font-size : 20px">New Message</b></div>
+			<div style="margin-left : 10px; margin-top : 15px; padding : 10px">
+				<b style="color : grey; margin-left : 52px">To: <input id="address" style="margin-left : 10px" size="41px" type="text"></b><p>
+				<b style="color : grey">Message: </b><span style="position : absolute; top : 86px; left : 110px;"><textarea id="comment" rows="4" cols="45"></textarea></span>
+				<input type="submit" id="send" style="position :relative; top : 109px; left : 310px" value="send">
+				<input type="submit" id="cancel" style="position :relative; top : 109px; left : 326px" value="cancel">
+			</div>
+		</div>
+	</body>
+</html>

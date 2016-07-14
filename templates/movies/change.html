@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+		<script src="{%static 'jquery.js' %}"></script>	
+		<script src="{%static 'forms.js' %}"></script>	
+		<script>
+			$(document).ready(function(){
+				$("#home").ajaxForm(function(data){
+					if ($.parseJSON(data) == "NO") {
+						alert("PROFILE PICTURE SUCCESSFULLY CHANGED");
+						window.close();
+						window.opener.location.reload();
+					}
+				})
+				$("#home1").ajaxForm(function(data){
+					if ($.parseJSON(data) == "NO") {
+						alert("PROFILE PICTURE SUCCESSFULLY CHANGED");
+						window.close();
+						window.opener.location.reload();
+					}
+				})				
+			})
+		</script>
+		<style>
+			#check{
+				width:350px;
+				background-color : #b0c4de; 
+			}
+		</style>
+		<div id="check" style="height : 220px" style="margin-left : 10px"y>
+			<p style="margin-left : 5px"><b>SELECT THE IMAGE</b></p>
+			<form id="home" enctype="multipart/form-data" style="margin-left : 5px" method="POST" action="/movies/changed/">
+				{% csrf_token %}
+				<span id="check">{{ login_form.as_p }}</span>		
+				<input id="sub" type="submit" name="submit" value="Change"/>
+			</form>
+			<p><b style="margin-left : 5px">CHOOSE IMAGE FROM FACEBOOK</b></p>
+			<form id="home1" enctype="multipart/form-data" style="margin-left : 5px" method="POST" action="/movies/facebook_profile/">
+				{% csrf_token %}
+				<input type="text" name="picture" placeholder="enter facebook username or id to fetch image" size="30" required/>
+				<input style="margin-top : 10px" type="submit" id="facebook" value="Change" />
+			</form>	
+		</div>
+</html>

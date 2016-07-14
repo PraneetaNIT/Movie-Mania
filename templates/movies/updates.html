@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+{% load static %}
+	<head>
+		<title>UPDATES</title>
+		<link href="{% static 'bootstrap.css' %}" rel="stylesheet">
+		<link href="{% static 'drag.css' %}"  rel="stylesheet">
+		<script src="{% static 'jquery.js' %}"></script>	
+		<script>
+			$(document).ready(function(){
+				$('input[type="submit"]').on('click', function(){
+					var type = $(this).val();
+					if (type == "Following"){
+						var s = $(this).attr('id');
+						$(this).val('Follow');
+						$(this).css('background-color','#4479BA');
+						$.get('/movies/unfollow/',{ unfollow : s },function(data){
+						})
+					}
+					else if (type == "RATE" ){
+						var s = $(this).closest('#movies');
+						var id = $(this).attr("id");
+						var value = s.find("#select").val();
+						var result = s.find("#res");
+						if (value == ""){
+							result.show();
+							result.html("<br><b style='color : red'>SELECT VALUE BETWEEN 1 TO 10 FOR RATING</b>");
+							return false;
+						}
+						var send = '/movies/rate/'+id+'/'
+						$.get(send,{ rate : value },function(data){
+							s.find("#first").hide();
+							s.find(".sub").hide();
+							s.find("#select").hide();
+							var status = "<b>YOUR RATING : </b> " + value;
+							var t = data.split("\n");
+							$("#rates").html("IMDBRATING : "+t[1]);
+							$("#votes").html("IMDBVOTES : "+t[0]);
+							result.show();
+							result.html(status);
+						})
+					}
+					else {
+						var s = $(this).attr('id');
+						$(this).val('Following');
+						$(this).css('background-color','#C6C6FF');
+						$.get('/movies/follow/',{ follow : s },function(data){
+						})
+					}
+				})
+			})
+		</script>
+		<style>
+			.button-link {
+				font-family: Verdana;
+				font-size: 15px; 
+				padding: 5px 5px;
+				background: #4479BA;
+				color: #FFF;
+				-webkit-border-radius: 4px;
+				-moz-border-radius: 4px;
+				border-radius: 4px;
+				border: solid 1px #20538D;
+				text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+				-webkit-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+				-moz-box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+				box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 1px rgba(0, 0, 0, 0.2);
+				-webkit-transition-duration: 0.2s;
+				-moz-transition-duration: 0.2s;
+				transition-duration: 0.2s;
+			}
+			.button-link:hover, .button-link:focus {
+				background: #356094;
+				border: solid 1px #2A4E77;
+				text-decoration: none;
+			}
+		</style>
+	</head>
+	<body>
+		<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+			<div class="container">
+					<ul class="nav navbar-nav pull-left">
+						<li class="dropdown">
+							<ul class="nav navbar-nav pull-right">
+								<li class="dropdown"> 
+									<a href="/movies/">HOME PAGE</a>
+								</li>
+								<li>
+									<a href="/movies/add/">ADVANCED SEARCH</a>
+								</li>
+							</ul>
+						</li>
+					</ul>
+				{% if user.is_authenticated %}
+					<ul class="nav navbar-nav pull-left" style="margin-left : 300px">
+						<li>
+							<ul class="nav navbar-nav pull-right">
+								<a href="/movies/profile/{{ user.username }}/"><img src = "/home/vijender/workspace/DBMS/media/{{ pic }}" width="60" height="60" /></a>
+							</ul>
+						</li>
+						<li style="margin-left : 10px">
+							<a href="/movies/transaction/">BUY OR SELL</a>
+						</li>
+						<li  style="margin-left : 10px">
+							<a href="/movies/profile/{{ user.username }}/">VIEW PROFILE</a>
+						</li>
+						<ul class="nav navbar-nav pull-left"  style="margin-left : 10px" id = "menu">
+							<li style="padding : 0px 10px 30px 5px" class="dropdown">OPTIONS <b class="caret"></b>
+								<ul class = "sub-menu">
+									<div class="list-group" style="background-color : white; overflow-y : auto; width : 200px; position : absolute; top : 38px; left : -110px">
+										<a href="/movies/reset/password"><div class="list-group-item"><li>Change Password</li></div></a>
+										<a href="/movies/reset/profile"><div class="list-group-item"><li>Update Profile</div></li></a>
+										<a href="/movies/logout/"><div class="list-group-item"><li>Logout</li></div></a>
+									</div>
+								</ul>
+							</li>
+						</ul>
+					</ul>	
+				{% endif %}
+			</div>
+		</nav>
+		<div style="width : 200px; margin-top : 100px">
+			<b style="margin-left : 42px; ">People you may follow</b>
+			{% for pro in user_suggestion %}
+				<fieldset style="margin-left : 30px; margin-top : 20px; width : 270px">
+					<legend></legend>
+						<a href="/movies/profile/{{ pro.1 }}/" ><img src = "/home/vijender/workspace/DBMS/media/{{ pro.0.picture }}" width="100" height="100" /></a>
+						<a href="/movies/profile/{{ pro.1 }}/" style="position : absolute; margin-left : 6px; "><b>{{ pro.2 }} {{ pro.3 }}</b></a><br>
+						<input class="button-link" style="width : 140px; position : relative; left : 110px; top : -33px" type="submit" id="{{ pro.1 }}" value="Follow" />
+					<legend></legend>
+				</fieldset>
+			{% endfor %}
+		</div>
+		<div style="float : left; position : absolute; left : 880px; top : 100px">
+			<b style="margin-left : 20px">Movies you may like</b>
+			{% for movie in movies_suggestion %}
+				<fieldset id="movies" style="margin-top : 20px; width : 350px">
+					<legend></legend>
+						<a href="/movies/{{ movie.6 }}/"><img src="/home/vijender/workspace/DBMS/media/{{ movie.4 }}" width="100" height="100"></a>
+						<a href="/movies/{{ movie.6 }}/" style="position : absolute; margin-left : 6px;"><b>TITLE : {{ movie.0 }}</b></a><br>
+						<b style="position : absolute; margin-left : 106px; margin-top : -80px;">YEAR : {{ movie.1 }}</b>
+						<b style="position : absolute; margin-left : 106px; margin-top : -60px;">LANGUAGE  : {{ movie.5 }}</b>
+						<b id="rates" style="position : absolute; margin-left : 106px; margin-top : -40px;">IMDBRATING : {{ movie.2 }}</b>
+						<b id="votes" style="position : absolute; margin-left : 106px; margin-top : -20px;">IMDBVOTES : {{ movie.3 }}</b>
+						<br><b id="first">RATE THIS MOVIE : </b>
+							<select required id ="select" name="carlist" form="carform" >
+								<option></option>
+								<option value="1">1</option>
+								<option value="2">2</option>
+								<option value="3">3</option>
+								<option value="4">4</option>
+								<option value="5">5</option>
+								<option value="6">6</option>
+								<option value="7">7</option>
+								<option value="8">8</option>
+								<option value="9">9</option>
+								<option value="10">10</option>
+							</select>
+							<input class="sub" id="{{ movie.6 }}" type="submit" value = "RATE">
+							<p id="res" hidden></p>
+					<legend style="margin-top : 20px"></legend>
+				</fieldset>
+			{% endfor %}
+		</div>
+	</body>
+</html>
